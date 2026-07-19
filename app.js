@@ -5,6 +5,9 @@ const morgan = require("morgan");
 // const cookieParser = require("cookie-parser");
 
 const errorHandler = require("./src/middlewares/error.middleware");
+const userAuthRouter = require('./src/routes/User/auth.routes')
+const questionairRoutes = require('./src/routes/admin/questionaire.routes')
+const adminAuthRoutes = require('./src/routes/admin/admin.auth.routes')
 
 const app = express();
 
@@ -18,7 +21,12 @@ app.use(express.urlencoded({ extended: true }));
 // app.use(cookieParser());
 
 
+app.use('/api/user',userAuthRouter)
 
+
+//admin
+app.use('/api/admin', adminAuthRoutes)
+app.use('/api/admin/question', questionairRoutes)
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({
