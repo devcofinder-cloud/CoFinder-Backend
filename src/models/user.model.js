@@ -16,28 +16,40 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^\S+@\S+\.\S+$/,
-        "Please enter a valid email",
-      ],
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
 
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
-      select: false,
+      select: true,
     },
 
     role: {
       type: String,
-      enum: ["user", "enterprise", "employer"],
+      enum: ["user", "enterprise", "employer","admin"],
       default: "user",
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    profileImage: {
+      type: String,
+      default: null,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("User", userSchema);
