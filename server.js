@@ -5,15 +5,11 @@ const connectDB = require("./src/config/db");
 
 const PORT = process.env.PORT || 5000;
 
-(async () => {
-    try {
-        await connectDB();
+app.get('/',(req,res)=>{
+    res.send("Jai Shree Ram")
+})
 
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on ${PORT}`);
-        });
-
-    } catch (err) {
-        console.log(err);
-    }
-})();
+connectDB();
+app.listen(PORT,()=>{
+    console.log(`Server running at ${PORT}`)
+})
