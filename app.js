@@ -18,7 +18,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// app.use(cookieParser());
+// app.use(cookieParser());   baad me 
 
 
 app.use('/api/user',userAuthRouter)
@@ -27,6 +27,15 @@ app.use('/api/user',userAuthRouter)
 //admin
 app.use('/api/admin', adminAuthRoutes)
 app.use('/api/admin/question', questionairRoutes)
+
+
+
+app.get('/',(req,res)=>{
+    res.send("Jai Shree Ram")
+})
+
+
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({
