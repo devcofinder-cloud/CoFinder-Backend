@@ -27,6 +27,15 @@ app.use('/api/user',userAuthRouter)
 //admin
 app.use('/api/admin', adminAuthRoutes)
 app.use('/api/admin/question', questionairRoutes)
+
+
+
+app.get('/',(req,res)=>{
+    res.send("Jai Shree Ram")
+})
+
+
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({
