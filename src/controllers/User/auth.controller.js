@@ -3,6 +3,7 @@ const ApiResponse = require("../../utils/ApiResponse");
 const {
   loginService,
   registerService,
+  googleLoginService,
   getQuestionsForUserService,
   submitQuestionnaireService,
   getMyQuestionnaireService,
@@ -30,7 +31,7 @@ exports.login = asyncHandler(async (req, res) => {
 exports.googleLogin = asyncHandler(async (req, res) => {
   const { token } = req.body;
 
-  const data = await authService.googleLogin(token);
+  const data = await googleLoginService(token);
 
   res.status(200).json(new ApiResponse(200, "Login Successful", data));
 });
@@ -77,3 +78,7 @@ exports.getMyQuestionnaire = asyncHandler(async (req, res) => {
       new ApiResponse(200, "Questionnaire fetched successfully", questionnaire),
     );
 });
+
+
+
+
