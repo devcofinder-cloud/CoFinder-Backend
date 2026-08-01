@@ -18,6 +18,25 @@ const userSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
+    username: {
+      type: String,
+    },
+    displayName: {
+      type: String,
+    },
+    location: {
+      type: String,
+    },
+    age: {
+      type: Number,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Prefer not to say", "Non-Binary"],
+    },
+    archetype: {
+      type: String,
+    },
 
     password: {
       type: String,
@@ -28,7 +47,7 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "enterprise", "employer","admin"],
+      enum: ["user", "enterprise", "employer", "admin"],
       default: "user",
     },
     googleId: {

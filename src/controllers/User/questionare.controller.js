@@ -20,6 +20,7 @@ const getAllQuestions = async (req, res) => {
 
 const submitQuestionnaire = async (req, res) => {
   try {
+    console.log("controller chala")
 
     const questionnaire =
       await submitQuestionnaireService(
