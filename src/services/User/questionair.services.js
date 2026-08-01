@@ -12,33 +12,40 @@ const getQuestionById = async (id) => {
 
 
 const submitQuestionnaireService = async (userId, answers) => {
-  // Get all active questions
+
+  if (!answers || !Array.isArray(answers)) {
+    throw new Error("Answers are required");
+  }
+
   const questions = await Question.find({
     isActive: true,
   });
 
-  // Calculate Scores + Archetype
-  const result = calculateArchetype(questions, answers);
-
-  // Save or Update Questionnaire
-  const questionnaire = await Questionnaire.findOneAndUpdate(
-    {
-      user: userId,
-    },
-    {
-      answers,
-      categoryScores: result.categoryScores,
-      archetype: result.archetype,
-    },
-    {
-      upsert: true,
-      new: true,
-    },
+  const result = calculateArchetype(
+    questions,
+    answers
   );
+
+  const questionnaire =
+    await Questionnaire.findOneAndUpdate(
+      {
+        user: userId,
+      },
+      {
+        user: userId,
+        answers,
+        categoryScores: result.categoryScores,
+        archetype: result.archetype,
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+      }
+    );
 
   return questionnaire;
 };
-
 
 
 const getUserQuestionnaire = async (userId) => {

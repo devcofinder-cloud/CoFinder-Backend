@@ -11,14 +11,17 @@ const calculateArchetype = (questions, answers) => {
   };
 
   answers.forEach((item) => {
-    const question = questions.find(
-      (q) => q._id.toString() === item.question.toString()
-    );
+  const question = questions.find(
+    (q) => q._id.toString() === item.question.toString()
+  );
 
-    if (!question) return;
+  console.log("Answer:", item);
+  console.log("Matched Question:", question);
 
-    scores[question.category] += Number(item.answer);
-  });
+  if (!question) return;
+
+  scores[question.category] += Number(item.answer);
+});
 
   let highestCategory = null;
   let highestScore = -1;
