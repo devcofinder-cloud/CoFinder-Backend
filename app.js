@@ -5,9 +5,7 @@ const morgan = require("morgan");
 // const cookieParser = require("cookie-parser");
 
 const errorHandler = require("./src/middlewares/error.middleware");
-const userAuthRouter = require('./src/routes/User/auth.routes')
-const questionairRoutes = require('./src/routes/admin/questionaire.routes')
-const adminAuthRoutes = require('./src/routes/admin/admin.auth.routes')
+
 
 const app = express();
 
@@ -21,12 +19,13 @@ app.use(express.urlencoded({ extended: true }));
 // app.use(cookieParser());   baad me 
 
 
-app.use('/api/user',userAuthRouter)
+app.use('/api/user',require('./src/routes/User/auth.routes'))
+app.use('/api/user',require('./src/routes/User/questionaire.routes'))
 
 
 //admin
-app.use('/api/admin', adminAuthRoutes)
-app.use('/api/admin/question', questionairRoutes)
+app.use('/api/admin', require('./src/routes/admin/admin.auth.routes'))
+app.use('/api/admin/question', require('./src/routes/admin/questionaire.routes'))
 
 
 

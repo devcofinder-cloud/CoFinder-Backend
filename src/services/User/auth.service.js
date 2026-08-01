@@ -14,6 +14,7 @@ const registerService = async ({ name, email, password, role }) => {
 
   // Password Hash
   const hashedPassword = await bcrypt.hash(password, 10);
+  
 
   const user = await User.create({
     name,
@@ -22,10 +23,21 @@ const registerService = async ({ name, email, password, role }) => {
     role,
   });
 
+  const token = jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    },
+  );
+
   // Password response me mat bhejo
   user.password = undefined;
 
-  return user;
+  return {user, token};
 };
 
 // ================= LOGIN =================
