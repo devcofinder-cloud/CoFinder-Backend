@@ -1,6 +1,9 @@
 const archetypes = require("./archetypes");
 
 const calculateArchetype = (questions, answers) => {
+    console.log("Questions =>", questions);
+  console.log("Answers =>", answers);
+
   const scores = {
     technology: 0,
     design: 0,
@@ -11,17 +14,26 @@ const calculateArchetype = (questions, answers) => {
   };
 
   answers.forEach((item) => {
-  const question = questions.find(
-    (q) => q._id.toString() === item.question.toString()
-  );
+    const question = questions.find(
+      (q) => q._id.toString() === item.question.toString()
+    );
 
-  console.log("Answer:", item);
-  console.log("Matched Question:", question);
+    console.log("Matched Question =>", question);
 
-  if (!question) return;
+    if (!question) return;
 
-  scores[question.category] += Number(item.answer);
-});
+    console.log(
+      "Category:",
+      question.category,
+      "Answer:",
+      item.answer
+    );
+
+    scores[question.category] += Number(item.answer);
+  });
+
+  console.log("Scores =>", scores);
+
 
   let highestCategory = null;
   let highestScore = -1;

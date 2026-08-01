@@ -46,38 +46,6 @@ exports.getQuestions = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Questions fetched successfully", questions));
 });
 
-// ================= SUBMIT QUESTIONNAIRE =================
-
-exports.submitQuestionnaire = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const { answers } = req.body;
-
-  const questionnaire = await submitQuestionnaireService(userId, answers);
-
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        "Questionnaire submitted successfully",
-        questionnaire,
-      ),
-    );
-});
-
-// ================= GET MY QUESTIONNAIRE =================
-
-exports.getMyQuestionnaire = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-
-  const questionnaire = await getMyQuestionnaireService(userId);
-
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, "Questionnaire fetched successfully", questionnaire),
-    );
-});
 
 
 

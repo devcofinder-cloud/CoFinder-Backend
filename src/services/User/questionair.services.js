@@ -1,4 +1,5 @@
 const { Questionnaire, Question } = require("../../models/questionair.model");
+const User = require("../../models/user.model");
 const calculateArchetype = require("../../utils/calculateArchetype");
 
 const getQuestions = async () => {
@@ -9,10 +10,7 @@ const getQuestionById = async (id) => {
   return await Question.findById(id);
 };
 
-
-
 const submitQuestionnaireService = async (userId, answers) => {
-
   if (!answers || !Array.isArray(answers)) {
     throw new Error("Answers are required");
   }
@@ -21,32 +19,30 @@ const submitQuestionnaireService = async (userId, answers) => {
     isActive: true,
   });
 
-  const result = calculateArchetype(
-    questions,
-    answers
-  );
+  const result = calculateArchetype(questions, answers);
 
-  const questionnaire =
-    await Questionnaire.findOneAndUpdate(
-      {
-        user: userId,
-      },
-      {
-        user: userId,
-        answers,
-        categoryScores: result.categoryScores,
-        archetype: result.archetype,
-      },
-      {
-        upsert: true,
-        new: true,
-        runValidators: true,
-      }
-    );
+  const questionnaire = await Questionnaire.findOneAndUpdate(
+    {
+      user: userId,
+    },
+    {
+      user: userId,
+      answers,
+      categoryScores: result.categoryScores,
+      archetype: result.archetype,
+    },
+    {
+      upsert: true,
+      new: true,
+      runValidators: true,
+    },
+  );
+  await User.findByIdAndUpdate(userId, {
+    archetype: result.archetype,
+  });
 
   return questionnaire;
 };
-
 
 const getUserQuestionnaire = async (userId) => {
   return await Questionnaire.findOne({

@@ -23,24 +23,5 @@ router.get(
   getQuestions
 );
 
-// Submit Questionnaire
-router.post(
-  "/questionnaire",
-  verifyToken,
-  submitQuestionnaire
-);
-
-// Get My Submitted Questionnaire
-router.get(
-  "/questionnaire",
-  verifyToken,
-  getMyQuestionnaire
-);
-
-
-
-
-
-
 
 module.exports = router;
