@@ -1,5 +1,6 @@
 const Question = require("../../models/profileQuestionSet.model");
 const UserAnswer = require("../../models/profileAnswer.model");
+const User = require("../../models/user.model");
 
 const getQuestions = async (setNumber) => {
   return await Question.find({ setNumber });
@@ -11,6 +12,8 @@ const submitAnswers = async (userId, setNumber, answers) => {
     user: userId,
     setNumber,
   });
+
+  const user = await User.findById(userId)
 
   if (alreadySubmitted) {
     throw new Error("Question set already submitted.");
@@ -27,7 +30,7 @@ const submitAnswers = async (userId, setNumber, answers) => {
   });
 
   return {
-    profileCompletion: completedSets * 30,
+    profileCompletion: user.completionStatus + 30,
   };
 };
 
