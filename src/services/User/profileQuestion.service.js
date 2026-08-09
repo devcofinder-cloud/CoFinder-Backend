@@ -1,5 +1,5 @@
 const Question = require("../../models/profileQuestionSet.model");
-const UserAnswer = require("../../models/ProfileAnswer.model");
+const UserAnswer = require("../../models/profileAnswer.model");
 
 const getQuestions = async (setNumber) => {
   return await Question.find({ setNumber });
