@@ -37,6 +37,9 @@ const userSchema = new mongoose.Schema(
     archetype: {
       type: String,
     },
+    completionStatus:{
+      type:Number
+    },
 
     password: {
       type: String,
