@@ -20,12 +20,14 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use('/api/user',require('./src/routes/User/auth.routes'))
-app.use('/api/user',require('./src/routes/User/questionaire.routes'))
+app.use('/api/user/question',require('./src/routes/User/questionaire.routes'))
+app.use('/api/user/profile-questions',require('./src/routes/User/profileQuestion.routes'))
 
 
 //admin
 app.use('/api/admin', require('./src/routes/admin/admin.auth.routes'))
 app.use('/api/admin/question', require('./src/routes/admin/questionaire.routes'))
+app.use('/api/admin/profile-questions', require('./src/routes/admin/profileQuestions.routes'))
 
 
 

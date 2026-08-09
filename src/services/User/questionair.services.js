@@ -39,6 +39,7 @@ const submitQuestionnaireService = async (userId, answers) => {
   );
   await User.findByIdAndUpdate(userId, {
     archetype: result.archetype,
+    completionStatus:30,
   });
 
   return questionnaire;
