@@ -22,6 +22,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/user',require('./src/routes/User/auth.routes'))
 app.use('/api/user/question',require('./src/routes/User/questionaire.routes'))
 app.use('/api/user/profile-questions',require('./src/routes/User/profileQuestion.routes'))
+app.use("/api/conversations",require('./src/routes/User/conversation.routes'));
+app.use("/api/messages",require('./src/routes/User/message.routes'));
+app.use("/api/posts",require('./src/routes/User/post.routes'));
+
 
 
 //admin
