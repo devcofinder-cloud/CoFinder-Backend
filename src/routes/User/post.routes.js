@@ -54,4 +54,10 @@ router.delete(
 );
 
 
+router.get("/my-post",
+    verifyToken,
+    postController.getMyPosts
+)
+
+
 module.exports = router;

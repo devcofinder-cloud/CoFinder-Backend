@@ -39,6 +39,24 @@ const getAllPosts = asyncHandler(async (req, res) => {
 });
 
 
+// Get my posts
+const getMyPosts = asyncHandler(async (req, res) => {
+
+    const posts =
+        await postService.getMyPosts({
+            userId: req.user.id,
+        });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "Your posts fetched successfully",
+            posts
+        )
+    );
+});
+
+
 // Get single
 const getPostById = asyncHandler(
     async (req, res) => {
@@ -103,6 +121,7 @@ const deletePost = asyncHandler(
 module.exports = {
     createPost,
     getAllPosts,
+    getMyPosts,
     getPostById,
     updatePost,
     deletePost,
