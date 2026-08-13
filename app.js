@@ -25,6 +25,7 @@ app.use('/api/user/profile-questions',require('./src/routes/User/profileQuestion
 app.use("/api/conversations",require('./src/routes/User/conversation.routes'));
 app.use("/api/messages",require('./src/routes/User/message.routes'));
 app.use("/api/posts",require('./src/routes/User/post.routes'));
+app.use("/api/dashboard",require('./src/routes/User/userDashboard.routes'));
 
 
 
