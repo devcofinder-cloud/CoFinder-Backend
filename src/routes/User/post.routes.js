@@ -29,6 +29,12 @@ router.get(
     postController.getAllPosts
 );
 
+router.get("/my-post",
+    verifyToken,
+    postController.getMyPosts
+)
+
+
 
 // Get single post
 router.get(
@@ -54,10 +60,6 @@ router.delete(
 );
 
 
-router.get("/my-post",
-    verifyToken,
-    postController.getMyPosts
-)
 
 
 module.exports = router;
