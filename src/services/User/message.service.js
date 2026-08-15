@@ -2,11 +2,6 @@ const Message = require("../../models/message.model");
 const Conversation = require("../../models/conversation.model");
 const ApiError = require("../../utils/ApiError");
 
-/*
-|--------------------------------------------------------------------------
-| HELPERS
-|--------------------------------------------------------------------------
-*/
 
 const checkConversationParticipant = async (
     conversationId,
@@ -34,11 +29,6 @@ const checkConversationParticipant = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| SEND MESSAGE
-|--------------------------------------------------------------------------
-*/
 
 const sendMessage = async ({
     conversationId,
@@ -129,13 +119,6 @@ const sendMessage = async ({
         .populate("replyTo");
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| GET MESSAGES
-|--------------------------------------------------------------------------
-*/
-
 const getMessages = async (
     conversationId,
     userId,
@@ -197,12 +180,6 @@ const getMessages = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| GET SINGLE MESSAGE
-|--------------------------------------------------------------------------
-*/
-
 const getMessageById = async (
     messageId,
     userId
@@ -241,11 +218,6 @@ const getMessageById = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| EDIT MESSAGE
-|--------------------------------------------------------------------------
-*/
 
 const editMessage = async (
     messageId,
@@ -305,12 +277,6 @@ const editMessage = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| DELETE MESSAGE
-|--------------------------------------------------------------------------
-*/
-
 const deleteMessage = async (
     messageId,
     userId
@@ -351,12 +317,6 @@ const deleteMessage = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| MARK MESSAGE AS READ
-|--------------------------------------------------------------------------
-*/
-
 const markMessageAsRead = async (
     messageId,
     userId
@@ -390,12 +350,6 @@ const markMessageAsRead = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| MARK CONVERSATION AS READ
-|--------------------------------------------------------------------------
-*/
-
 const markConversationAsRead = async (
     conversationId,
     userId
@@ -426,12 +380,6 @@ const markConversationAsRead = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| UNREAD MESSAGE COUNT
-|--------------------------------------------------------------------------
-*/
-
 const getUnreadCount = async (
     conversationId,
     userId
@@ -455,11 +403,6 @@ const getUnreadCount = async (
 };
 
 
-/*
-|--------------------------------------------------------------------------
-| ALL UNREAD COUNT
-|--------------------------------------------------------------------------
-*/
 
 const getTotalUnreadCount = async (
     userId
@@ -476,12 +419,6 @@ const getTotalUnreadCount = async (
     };
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| SEARCH MESSAGES
-|--------------------------------------------------------------------------
-*/
 
 const searchMessages = async ({
     conversationId,
@@ -551,12 +488,6 @@ const searchMessages = async ({
     };
 };
 
-
-/*
-|--------------------------------------------------------------------------
-| DELETE ALL MESSAGES FOR USER
-|--------------------------------------------------------------------------
-*/
 
 const clearConversation = async (
     conversationId,

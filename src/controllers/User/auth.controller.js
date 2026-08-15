@@ -49,4 +49,14 @@ exports.getQuestions = asyncHandler(async (req, res) => {
 
 
 
+exports.getMyProfile = asyncHandler(async (req, res) => {
+  const user = await userService.getMyProfile(req.user.id);
 
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      "Profile fetched successfully",
+      user
+    )
+  );
+});

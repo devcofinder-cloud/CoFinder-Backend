@@ -152,6 +152,13 @@ const getMyQuestionnaireService = async (userId) => {
   }).populate("answers.question");
 };
 
+
+
+const getMyProfile = async (userId) => {
+  return await User.findById(userId);
+};
+
+
 module.exports = {
   registerService,
   loginService,

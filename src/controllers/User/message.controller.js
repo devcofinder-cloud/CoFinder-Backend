@@ -4,12 +4,6 @@ const ApiResponse = require("../../utils/ApiResponse");
 const messageService = require("../../services/User/message.service");
 
 
-/*
-|--------------------------------------------------------------------------
-| SEND MESSAGE
-|--------------------------------------------------------------------------
-*/
-
 const sendMessage = asyncHandler(
     async (req, res) => {
         const {
@@ -41,12 +35,6 @@ const sendMessage = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| GET MESSAGES
-|--------------------------------------------------------------------------
-*/
-
 const getMessages = asyncHandler(
     async (req, res) => {
         const {
@@ -76,13 +64,6 @@ const getMessages = asyncHandler(
     }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| GET SINGLE MESSAGE
-|--------------------------------------------------------------------------
-*/
-
 const getMessageById = asyncHandler(
     async (req, res) => {
         const message =
@@ -101,12 +82,6 @@ const getMessageById = asyncHandler(
     }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| EDIT MESSAGE
-|--------------------------------------------------------------------------
-*/
 
 const editMessage = asyncHandler(
     async (req, res) => {
@@ -132,12 +107,6 @@ const editMessage = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| DELETE MESSAGE
-|--------------------------------------------------------------------------
-*/
-
 const deleteMessage = asyncHandler(
     async (req, res) => {
         const message =
@@ -157,11 +126,6 @@ const deleteMessage = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| MARK MESSAGE AS READ
-|--------------------------------------------------------------------------
-*/
 
 const markMessageAsRead = asyncHandler(
     async (req, res) => {
@@ -182,11 +146,6 @@ const markMessageAsRead = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| MARK CONVERSATION AS READ
-|--------------------------------------------------------------------------
-*/
 
 const markConversationAsRead =
     asyncHandler(async (req, res) => {
@@ -206,11 +165,7 @@ const markConversationAsRead =
     });
 
 
-/*
-|--------------------------------------------------------------------------
-| GET UNREAD COUNT
-|--------------------------------------------------------------------------
-*/
+
 
 const getUnreadCount = asyncHandler(
     async (req, res) => {
@@ -231,12 +186,6 @@ const getUnreadCount = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| GET TOTAL UNREAD COUNT
-|--------------------------------------------------------------------------
-*/
-
 const getTotalUnreadCount = asyncHandler(
     async (req, res) => {
         const result =
@@ -254,12 +203,6 @@ const getTotalUnreadCount = asyncHandler(
     }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| SEARCH MESSAGES
-|--------------------------------------------------------------------------
-*/
 
 const searchMessages = asyncHandler(
     async (req, res) => {
@@ -293,11 +236,7 @@ const searchMessages = asyncHandler(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| CLEAR CONVERSATION
-|--------------------------------------------------------------------------
-*/
+
 
 const clearConversation = asyncHandler(
     async (req, res) => {

@@ -8,6 +8,7 @@ const {
   getQuestions,
   submitQuestionnaire,
   getMyQuestionnaire,
+  getMyProfile
 } = require("../../controllers/User/auth.controller");
 const { verifyToken } = require("../../middlewares/auth.middleware");
 
@@ -15,6 +16,9 @@ const { verifyToken } = require("../../middlewares/auth.middleware");
 router.post("/register", register);
 router.post("/login", login);
 router.post("/google-login", googleLogin);
+
+
+router.get("/me", verifyToken, getMyProfile);
 
 
 router.get(
