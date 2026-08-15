@@ -166,4 +166,5 @@ module.exports = {
   getQuestionsForUserService,
   submitQuestionnaireService,
   getMyQuestionnaireService,
+  getMyProfile
 };

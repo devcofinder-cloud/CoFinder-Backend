@@ -7,6 +7,7 @@ const {
   getQuestionsForUserService,
   submitQuestionnaireService,
   getMyQuestionnaireService,
+  getMyProfile
 } = require("../../services/User/auth.service");
 
 exports.register = asyncHandler(async (req, res) => {
@@ -50,7 +51,7 @@ exports.getQuestions = asyncHandler(async (req, res) => {
 
 
 exports.getMyProfile = asyncHandler(async (req, res) => {
-  const user = await userService.getMyProfile(req.user.id);
+  const user = await getMyProfile(req.user.id);
 
   return res.status(200).json(
     new ApiResponse(
