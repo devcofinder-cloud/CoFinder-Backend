@@ -2,6 +2,7 @@ const User = require("../../models/user.model");
 const Post = require("../../models/post.model");
 const ProfessionalProfile = require("../../models/professionalProfile.model");
 const ApiError = require('../../utils/ApiError')
+const mongoose = require('mongoose')
 
 
 const getUsers = async ({ userId }) => {
