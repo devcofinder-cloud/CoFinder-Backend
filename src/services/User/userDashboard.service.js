@@ -1,5 +1,8 @@
 const User = require("../../models/user.model");
 const Post = require("../../models/post.model");
+const ProfessionalProfile = require("../../models/professionalProfile.model");
+const ApiError = require('../../utils/ApiError')
+
 
 const getUsers = async ({ userId }) => {
   const users = await User.find({
@@ -74,7 +77,67 @@ const getUserProfileWithPosts = async ({ userId }) => {
     return posts;
 };
 
+
+
+
+
+
+
+
+const getUserProfileById = async ({ userId }) => {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        throw new ApiError(400, "Invalid user ID");
+    }
+
+    const user = await User.findById(userId)
+        .select(
+            "_id name username displayName location age gender archetype completionStatus role profileImage createdAt updatedAt"
+        )
+        .lean();
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const professionalProfile =
+        await ProfessionalProfile.findOne({
+            user: userId,
+        })
+            .select("-__v")
+            .lean();
+
+    return {
+        user: {
+            _id: user._id,
+            name: user.name,
+            username: user.username,
+            displayName: user.displayName,
+            profileImage: user.profileImage,
+
+            location: user.location,
+            age: user.age,
+            gender: user.gender,
+
+            archetype: user.archetype,
+            completionStatus: user.completionStatus,
+
+            role: user.role,
+
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        },
+
+        professionalProfile: professionalProfile || null,
+    };
+};
+
 module.exports = {
   getUsers,
   getUserProfileWithPosts,
+  getUserProfileById
 };
+
+
+
+
+

@@ -35,8 +35,30 @@ const getUserProfileWithPosts = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserProfileById = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        throw new ApiError(400, "User ID is required");
+    }
+
+    const profile = await userService.getUserProfileById({
+        userId,
+    });
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            "User profile fetched successfully",
+            profile
+        )
+    );
+});
+
 
 module.exports = {
     getUsers,
     getUserProfileWithPosts,
+    getUserProfileById
+
 };
