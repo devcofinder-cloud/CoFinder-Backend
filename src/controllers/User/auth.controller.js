@@ -7,7 +7,8 @@ const {
   getQuestionsForUserService,
   submitQuestionnaireService,
   getMyQuestionnaireService,
-  getMyProfile
+  getMyProfile,
+  updateUserProfile
 } = require("../../services/User/auth.service");
 
 exports.register = asyncHandler(async (req, res) => {
@@ -60,4 +61,25 @@ exports.getMyProfile = asyncHandler(async (req, res) => {
       user
     )
   );
+});
+
+exports.editProfile = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const payload = { ...req.body };
+
+  // Agar new profile image upload hui hai
+  if (req.file) {
+    const imageUrl = await uploadToCloudinary(req.file.path);
+
+    payload.profileImage = imageUrl;
+  }
+
+  const updatedProfile = await updateUserProfile(userId, payload);
+
+  return res.status(200).json({
+    success: true,
+    message: "Profile updated successfully",
+    updatedProfile,
+  });
 });

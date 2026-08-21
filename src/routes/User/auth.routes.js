@@ -8,9 +8,13 @@ const {
   getQuestions,
   submitQuestionnaire,
   getMyQuestionnaire,
-  getMyProfile
+  getMyProfile,
+  editProfile
 } = require("../../controllers/User/auth.controller");
 const { verifyToken } = require("../../middlewares/auth.middleware");
+
+
+const upload = require('../../middlewares/upload.middleware')
 
 // Public Routes
 router.post("/register", register);
@@ -19,6 +23,7 @@ router.post("/google-login", googleLogin);
 
 
 router.get("/me", verifyToken, getMyProfile);
+router.put('/edit-profile', verifyToken,upload.single('profileImage'),editProfile)
 
 
 router.get(

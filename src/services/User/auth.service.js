@@ -158,6 +158,47 @@ const getMyProfile = async (userId) => {
   return await User.findById(userId);
 };
 
+const updateUserProfile = async ({ userId, data }) => {
+  const allowedFields = [
+    "name",
+    "username",
+    "displayName",
+    "location",
+    "age",
+    "gender",
+    "archetype",
+    "profileImage",
+  ];
+
+  const updateData = {};
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      updateData[field] = data[field];
+    }
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    throw new ApiError(400, "No profile fields provided for update");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: updateData,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return user;
+};
 
 module.exports = {
   registerService,
@@ -166,5 +207,8 @@ module.exports = {
   getQuestionsForUserService,
   submitQuestionnaireService,
   getMyQuestionnaireService,
-  getMyProfile
+  getMyProfile,
+  updateUserProfile
 };
+
+
