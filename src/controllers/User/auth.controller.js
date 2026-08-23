@@ -69,14 +69,33 @@ exports.editProfile = asyncHandler(async (req, res) => {
 
   const payload = { ...req.body };
 
-  // Agar new profile image upload hui hai
+  // Profile image upload
   if (req.file) {
-    const imageUrl = await cloudinary.uploader.upload(req.file.path);
+    const imageUrl = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "profile-images",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+
+      stream.end(req.file.buffer);
+    });
 
     payload.profileImage = imageUrl.secure_url;
   }
 
-  const updatedProfile = await updateUserProfile(userId, payload);
+  const updatedProfile = await updateUserProfile({
+    userId,
+    data: payload,
+  });
 
   return res.status(200).json({
     success: true,
