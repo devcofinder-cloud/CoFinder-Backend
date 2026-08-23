@@ -10,27 +10,15 @@ const conversationController = require(
 
 
 // Create / Get conversation
-router.post(
-    "/",
-    verifyToken,
-    conversationController.createConversation
-);
+router.post( "/", verifyToken,  conversationController.createConversation);
 
 
 // Get all conversations
-router.get(
-    "/",
-    verifyToken,
-    conversationController.getUserConversations
-);
+router.get("/", verifyToken, conversationController.getUserConversations);
 
 
 // Get single conversation
-router.get(
-    "/:conversationId",
-    verifyToken,
-    conversationController.getConversationById
-);
+router.get( "/:conversationId", verifyToken, conversationController.getConversationById);
 
 
 module.exports = router;

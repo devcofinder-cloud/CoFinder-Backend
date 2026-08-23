@@ -68,6 +68,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    profileImageType:{
+        type:String,
+        enum:['avatar', 'image'],
+    }
   },
   {
     timestamps: true,

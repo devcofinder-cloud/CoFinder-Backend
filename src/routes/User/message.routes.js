@@ -33,10 +33,7 @@ router.post(
 
 
 // GET /messages/:conversationId
-router.get(
-    "/:conversationId",
-    getMessages
-);
+router.get("/:conversationId",getMessages);
 
 // GET /messages/single/:messageId
 router.get(
