@@ -1,5 +1,6 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/ApiResponse");
+const cloudinary = require('../../config/cloudinary')
 const {
   loginService,
   registerService,
@@ -70,7 +71,7 @@ exports.editProfile = asyncHandler(async (req, res) => {
 
   // Agar new profile image upload hui hai
   if (req.file) {
-    const imageUrl = await uploadToCloudinary(req.file.path);
+    const imageUrl = await cloudinary.upload(req.file.path);
 
     payload.profileImage = imageUrl;
   }
