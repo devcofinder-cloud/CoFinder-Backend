@@ -69,28 +69,68 @@ exports.editProfile = asyncHandler(async (req, res) => {
 
   const payload = { ...req.body };
 
-  // Profile image upload
-  if (req.file) {
-    const imageUrl = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "profile-images",
-          resource_type: "image",
-        },
-        (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }
-      );
+  /*
+  |--------------------------------------------------------------------------
+  | PROFILE IMAGE
+  |--------------------------------------------------------------------------
+  */
 
-      stream.end(req.file.buffer);
-    });
+  // Avatar selected
+  if (payload.profileImageType === "avatar") {
+    /*
+     * Avatar already frontend se URL ke form me aa raha hai.
+     * Isliye Cloudinary ki zarurat nahi hai.
+     */
 
-    payload.profileImage = imageUrl.secure_url;
+    if (!payload.profileImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Avatar URL is required",
+      });
+    }
+
+    // Direct URL database me save hoga
+    payload.profileImage = payload.profileImage;
+
+    // Make sure uploaded file is ignored
+    delete payload.file;
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | NORMAL IMAGE UPLOAD
+  |--------------------------------------------------------------------------
+  */
+
+  else if (payload.profileImageType === "image") {
+    if (req.file) {
+      const imageResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "profile-images",
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
+      payload.profileImage = imageResult.secure_url;
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | UPDATE USER
+  |--------------------------------------------------------------------------
+  */
 
   const updatedProfile = await updateUserProfile({
     userId,
