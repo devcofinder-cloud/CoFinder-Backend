@@ -13,6 +13,12 @@ const chatSocket = (io) => {
 
         console.log(`User connected: ${userId}`);
 
+        /*
+        |--------------------------------------------------------------------------
+        | JOIN CONVERSATION
+        |--------------------------------------------------------------------------
+        */
+
         socket.on("join_conversation", ({ conversationId }) => {
             if (!conversationId) return;
 
@@ -23,7 +29,12 @@ const chatSocket = (io) => {
             );
         });
 
-       
+        /*
+        |--------------------------------------------------------------------------
+        | LEAVE CONVERSATION
+        |--------------------------------------------------------------------------
+        */
+
         socket.on("leave_conversation", ({ conversationId }) => {
             if (!conversationId) return;
 
@@ -34,6 +45,11 @@ const chatSocket = (io) => {
             );
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | SEND MESSAGE
+        |--------------------------------------------------------------------------
+        */
 
         socket.on("sendMessage", async (data) => {
             try {
@@ -55,17 +71,17 @@ const chatSocket = (io) => {
                         replyTo,
                     });
 
-                /*
-                | Send to everyone inside conversation
-                | including sender
-                */
-
                 io.to(`conversation:${conversationId}`).emit(
                     "new_message",
                     message
                 );
 
             } catch (error) {
+                console.error(
+                    "Send message error:",
+                    error
+                );
+
                 socket.emit("message_error", {
                     success: false,
                     message: error.message,
@@ -73,6 +89,80 @@ const chatSocket = (io) => {
             }
         });
 
+        /*
+        |--------------------------------------------------------------------------
+        | EDIT MESSAGE
+        |--------------------------------------------------------------------------
+        */
+
+        socket.on("editMessage", async (data) => {
+            try {
+                const {
+                    messageId,
+                    content,
+                } = data;
+
+                if (!messageId) {
+                    throw new Error(
+                        "Message ID is required"
+                    );
+                }
+
+                if (!content?.trim()) {
+                    throw new Error(
+                        "Message content is required"
+                    );
+                }
+
+                const updatedMessage =
+                    await messageService.editMessage(
+                        messageId,
+                        userId,
+                        content
+                    );
+
+                const conversationId =
+                    updatedMessage.conversation?.toString();
+
+                if (!conversationId) {
+                    throw new Error(
+                        "Conversation ID not found"
+                    );
+                }
+
+                /*
+                |----------------------------------------------------------------------
+                | Send updated message to everyone
+                |----------------------------------------------------------------------
+                */
+
+                io.to(
+                    `conversation:${conversationId}`
+                ).emit(
+                    "message_edited",
+                    updatedMessage
+                );
+
+            } catch (error) {
+                console.error(
+                    "Edit message error:",
+                    error
+                );
+
+                socket.emit("message_error", {
+                    success: false,
+                    message:
+                        error?.message ||
+                        "Failed to edit message",
+                });
+            }
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | TYPING
+        |--------------------------------------------------------------------------
+        */
 
         socket.on("typing", ({ conversationId }) => {
             if (!conversationId) return;
@@ -85,7 +175,11 @@ const chatSocket = (io) => {
                 });
         });
 
-       
+        /*
+        |--------------------------------------------------------------------------
+        | STOP TYPING
+        |--------------------------------------------------------------------------
+        */
 
         socket.on("stop_typing", ({ conversationId }) => {
             if (!conversationId) return;
@@ -98,7 +192,11 @@ const chatSocket = (io) => {
                 });
         });
 
-    
+        /*
+        |--------------------------------------------------------------------------
+        | DISCONNECT
+        |--------------------------------------------------------------------------
+        */
 
         socket.on("disconnect", () => {
             console.log(
