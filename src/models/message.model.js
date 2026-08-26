@@ -1,5 +1,27 @@
 const mongoose = require("mongoose");
 
+const attachmentSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true,
+    },
+    size: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
 const messageSchema = new mongoose.Schema(
   {
     conversation: {
@@ -24,31 +46,18 @@ const messageSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 5000,
+      default: "",
     },
 
     messageType: {
       type: String,
-      enum: ["text", "image", "file"],
+      enum: ["text", "image", "video", "file"],
       default: "text",
     },
 
     attachment: {
-      url: {
-        type: String,
-        default: null,
-      },
-      name: {
-        type: String,
-        default: null,
-      },
-      type: {
-        type: String,
-        default: null,
-      },
-      size: {
-        type: Number,
-        default: null,
-      },
+      type: attachmentSchema,
+      default: null,
     },
 
     replyTo: {
@@ -79,7 +88,7 @@ const messageSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Message", messageSchema);

@@ -17,6 +17,7 @@ const {
 } = require("../../controllers/User/message.controller");
 
 const {verifyToken} = require("../../middlewares/auth.middleware");
+const upload = require('../../middlewares/upload.middleware')
 
 
 router.use(verifyToken);
@@ -27,9 +28,10 @@ router.use(verifyToken);
 // POST /messages/send
 router.post(
     "/send",
+    verifyToken,
+    upload.single("attachment"),
     sendMessage
 );
-
 
 
 // GET /messages/:conversationId

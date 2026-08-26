@@ -1,38 +1,68 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/ApiResponse");
-
+const cloudinary = require('../../config/cloudinary')
 const messageService = require("../../services/User/message.service");
 
 
-const sendMessage = asyncHandler(
-    async (req, res) => {
-        const {
-            conversationId,
-            receiverId,
-            content,
-            messageType,
-            replyTo,
-        } = req.body;
+const sendMessage = asyncHandler(async (req, res) => {
+    const {
+        conversationId,
+        receiverId,
+        content,
+        messageType,
+        replyTo,
+    } = req.body;
 
-        const message =
-            await messageService.sendMessage({
-                conversationId,
-                senderId: req.user.id,
-                receiverId,
-                content,
-                messageType,
-                replyTo,
-            });
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
 
-        return res.status(201).json(
-            new ApiResponse(
-                201,
-                "Message sent successfully",
-                message
-            )
-        );
+    let attachment = null;
+
+    if (req.file) {
+        const result = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: "messages",
+                    resource_type: "auto",
+                },
+                (error, result) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(result);
+                    }
+                }
+            );
+
+            stream.end(req.file.buffer);
+        });
+
+        attachment = {
+            url: result.secure_url,
+            name: req.file.originalname,
+            type: req.file.mimetype,
+            size: req.file.size,
+        };
     }
-);
+
+    const message = await messageService.sendMessage({
+        conversationId,
+        senderId: req.user.id,
+        receiverId,
+        content,
+        messageType,
+        replyTo,
+        attachment,
+    });
+
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            "Message sent successfully",
+            message
+        )
+    );
+});
 
 
 const getMessages = asyncHandler(

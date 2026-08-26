@@ -37,7 +37,8 @@ const sendMessage = async ({
     content,
     messageType = "text",
     replyTo = null,
-}) => {
+    attachment = null,
+})  => {
     if (
         messageType === "text" &&
         !content?.trim()
@@ -91,13 +92,14 @@ const sendMessage = async ({
     }
 
     const message = await Message.create({
-        conversation: conversationId,
-        sender: senderId,
-        receiver: receiverId,
-        content: content?.trim() || "",
-        messageType,
-        replyTo,
-    });
+    conversation: conversationId,
+    sender: senderId,
+    receiver: receiverId,
+    content: content?.trim() || "",
+    messageType,
+    replyTo,
+    attachment,
+});
 
     await Conversation.findByIdAndUpdate(
         conversationId,
