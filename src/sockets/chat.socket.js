@@ -65,11 +65,18 @@ const chatSocket = (io) => {
         if (attachment?.buffer) {
           const buffer = Buffer.from(attachment.buffer);
 
+          const resourceType =
+            attachment.type === "application/pdf" ||
+            (!attachment.type.startsWith("image/") &&
+              !attachment.type.startsWith("video/"))
+              ? "raw"
+              : "auto";
+
           const result = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
               {
                 folder: "messages",
-                resource_type: "auto",
+                resource_type: resourceType,
               },
               (error, result) => {
                 if (error) {
