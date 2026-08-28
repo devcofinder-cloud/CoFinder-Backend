@@ -56,9 +56,26 @@ const getUserProfileById = asyncHandler(async (req, res) => {
 });
 
 
+
+const getPostsByUserId = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  console.log("USER ID:", userId);
+
+  const posts = await userService.getPostsByUserId({ userId });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      "Posts fetched successfully",
+      posts
+    )
+  );
+});
+
 module.exports = {
     getUsers,
     getUserProfileWithPosts,
-    getUserProfileById
-
+    getUserProfileById,
+    getPostsByUserId
 };

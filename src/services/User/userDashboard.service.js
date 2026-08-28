@@ -121,8 +121,20 @@ const getUserProfileById = async ({ userId }) => {
   };
 };
 
+
+
+const getPostsByUserId = async({userId})=>{
+  
+  const posts = await Post.find({author: userId})
+  return posts
+}
+
+
+
+
 module.exports = {
   getUsers,
   getUserProfileWithPosts,
   getUserProfileById,
+  getPostsByUserId
 };
