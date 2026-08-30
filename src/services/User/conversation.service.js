@@ -86,7 +86,7 @@ const getConversationById = async (conversationId, userId) => {
 };
 
 
-const deleteConversation = async ({ conversationId }) => {
+const deleteConversation = async (conversationId) => {
   const convo = await Conversation.findByIdAndDelete(conversationId);
 
   if (!convo) {
