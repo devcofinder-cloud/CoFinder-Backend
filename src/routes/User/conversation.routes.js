@@ -21,4 +21,9 @@ router.get("/", verifyToken, conversationController.getUserConversations);
 router.get( "/:conversationId", verifyToken, conversationController.getConversationById);
 
 
+// delete Conversation
+
+router.delete('/:conversationId', verifyToken, conversationController.deleteConversation)
+
+
 module.exports = router;

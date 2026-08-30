@@ -85,8 +85,20 @@ const getConversationById = async (conversationId, userId) => {
   return conversation;
 };
 
+
+const deleteConversation = async ({ conversationId }) => {
+  const convo = await Conversation.findByIdAndDelete(conversationId);
+
+  if (!convo) {
+    throw new Error("Conversation not found");
+  }
+
+  return convo;
+};
+
 module.exports = {
   createConversation,
   getUserConversations,
   getConversationById,
+  deleteConversation
 };
