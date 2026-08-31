@@ -4,7 +4,7 @@ const ApiResponse = require("../../utils/ApiResponse");
 const professionalProfileService = require("../../services/User/professionalProfile.service");
 
 const getProfessionalProfile = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.query;
 
   const profile =
     await professionalProfileService.getProfessionalProfile(userId);
