@@ -19,10 +19,12 @@ const getProfessionalProfile = asyncHandler(async (req, res) => {
 });
 
 const updateProfessionalProfile = asyncHandler(async (req, res) => {
+  const { userId, ...data } = req.body;
+
   const profile =
     await professionalProfileService.updateProfessionalProfile(
-      req.user.id,
-      req.body
+      userId,
+      data
     );
 
   return res.status(200).json(
