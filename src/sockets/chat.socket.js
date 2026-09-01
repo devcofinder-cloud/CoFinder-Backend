@@ -120,37 +120,35 @@ const chatSocket = (io) => {
     });
 
     socket.on("delete_message", async ({ messageId, conversationId }) => {
-    try {
+      try {
         if (!messageId || !conversationId) {
-            socket.emit("message_error", {
-                success: false,
-                message: "Message ID and conversation ID are required",
-            });
-
-            return;
+          return socket.emit("message_error", {
+            success: false,
+            message: "Message ID and conversation ID are required",
+          });
         }
 
-        const deletedMessage = await messageService.deleteMessage(
-            messageId,
-            socket.user.id
+        const message = await messageService.deleteMessage(
+          messageId,
+          socket.user.id,
         );
 
-        io.to(String(conversationId)).emit("message_deleted", {
-            _id: String(deletedMessage._id),
-            conversationId: String(conversationId),
-            isDeleted: true,
-            deletedAt: deletedMessage.deletedAt,
+        // Same conversation ke saare connected users ko event
+        io.to(`conversation_${conversationId}`).emit("message_deleted", {
+          _id: message._id,
+          conversationId: String(conversationId),
+          isDeleted: true,
+          deletedAt: message.deletedAt,
         });
-
-    } catch (error) {
+      } catch (error) {
         console.error("Delete message socket error:", error);
 
         socket.emit("message_error", {
-            success: false,
-            message: error.message || "Failed to delete message",
+          success: false,
+          message: error.message || "Failed to delete message",
         });
-    }
-});
+      }
+    });
 
     /*
         |--------------------------------------------------------------------------

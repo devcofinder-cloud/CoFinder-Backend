@@ -279,12 +279,8 @@ const editMessage = async (
 };
 
 
-const deleteMessage = async (
-    messageId,
-    userId
-) => {
-    const message =
-        await Message.findById(messageId);
+const deleteMessage = async (messageId, userId) => {
+    const message = await Message.findById(messageId);
 
     if (!message) {
         throw new ApiError(
@@ -299,6 +295,8 @@ const deleteMessage = async (
             "Message already deleted"
         );
     }
+
+
 
     message.isDeleted = true;
     message.deletedAt = new Date();
