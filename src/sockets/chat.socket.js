@@ -133,9 +133,8 @@ const chatSocket = (io) => {
           socket.user.id,
         );
 
-        // Same conversation ke saare connected users ko event
-        io.to(`conversation_${conversationId}`).emit("message_deleted", {
-          _id: message._id,
+        io.to(`conversation:${conversationId}`).emit("message_deleted", {
+          _id: String(message._id),
           conversationId: String(conversationId),
           isDeleted: true,
           deletedAt: message.deletedAt,
