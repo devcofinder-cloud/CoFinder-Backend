@@ -119,6 +119,39 @@ const chatSocket = (io) => {
       }
     });
 
+    socket.on("delete_message", async ({ messageId, conversationId }) => {
+    try {
+        if (!messageId || !conversationId) {
+            socket.emit("message_error", {
+                success: false,
+                message: "Message ID and conversation ID are required",
+            });
+
+            return;
+        }
+
+        const deletedMessage = await messageService.deleteMessage(
+            messageId,
+            socket.user.id
+        );
+
+        io.to(String(conversationId)).emit("message_deleted", {
+            _id: String(deletedMessage._id),
+            conversationId: String(conversationId),
+            isDeleted: true,
+            deletedAt: deletedMessage.deletedAt,
+        });
+
+    } catch (error) {
+        console.error("Delete message socket error:", error);
+
+        socket.emit("message_error", {
+            success: false,
+            message: error.message || "Failed to delete message",
+        });
+    }
+});
+
     /*
         |--------------------------------------------------------------------------
         | EDIT MESSAGE
