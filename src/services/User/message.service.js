@@ -293,16 +293,6 @@ const deleteMessage = async (
         );
     }
 
-    if (
-        message.sender.toString() !==
-        userId.toString()
-    ) {
-        throw new ApiError(
-            403,
-            "You can only delete your own messages"
-        );
-    }
-
     if (message.isDeleted) {
         throw new ApiError(
             400,
