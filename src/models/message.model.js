@@ -80,6 +80,10 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    isRead:{
+      type:Boolean,
+      default:false
+    },
 
     seenAt: {
       type: Date,
