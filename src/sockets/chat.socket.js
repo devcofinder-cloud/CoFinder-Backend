@@ -1,6 +1,7 @@
 const socketAuth = require("../middlewares/socketAuth.middleware");
 const messageService = require("../services/User/message.service");
 const cloudinary = require("../config/cloudinary");
+const notificationService = require("../services/User/notification.service");
 
 const chatSocket = (io) => {
   // Authenticate socket connection
@@ -98,6 +99,7 @@ const chatSocket = (io) => {
           };
         }
 
+        // Save message
         const message = await messageService.sendMessage({
           conversationId,
           senderId: userId,
@@ -108,7 +110,22 @@ const chatSocket = (io) => {
           attachment: uploadedAttachment,
         });
 
+        // Send message to conversation
         io.to(`conversation:${conversationId}`).emit("new_message", message);
+
+        // Create notification
+        await notificationService.createNotification({
+          recipient: receiverId,
+          sender: userId,
+          type: "message",
+          title: "New message",
+          message: content?.trim() ? content : "Sent you an attachment",
+          data: {
+            conversationId,
+            messageId: message._id,
+          },
+          io,
+        });
       } catch (error) {
         console.error("Send message error:", error);
 
