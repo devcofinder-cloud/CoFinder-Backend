@@ -154,7 +154,7 @@ exports.saveFcmToken = asyncHandler(async (req, res) => {
   }
 
   await User.findByIdAndUpdate(
-    req.user._id,
+    req.user.id,
     {
       $addToSet: {
         fcmTokens: token,

@@ -36,6 +36,7 @@ router.get(
 
 router.post(
   "/fcm-token",
+  verifyToken,
   saveFcmToken
 );
 
