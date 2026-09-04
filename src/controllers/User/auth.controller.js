@@ -1,6 +1,7 @@
 const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/ApiResponse");
 const cloudinary = require('../../config/cloudinary')
+const User = require('../../models/user.model')
 const {
   loginService,
   registerService,
