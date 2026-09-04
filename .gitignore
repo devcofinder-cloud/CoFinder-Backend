@@ -4,3 +4,5 @@ node_modules
 seed.js
 profileSeed.js
 postSeed.js
+
+firebase-cred.json

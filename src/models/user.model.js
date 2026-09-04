@@ -37,8 +37,8 @@ const userSchema = new mongoose.Schema(
     archetype: {
       type: String,
     },
-    completionStatus:{
-      type:Number
+    completionStatus: {
+      type: Number,
     },
 
     password: {
@@ -69,10 +69,14 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    profileImageType:{
-        type:String,
-        enum:['avatar', 'image'],
-    }
+    profileImageType: {
+      type: String,
+      enum: ["avatar", "image"],
+    },
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

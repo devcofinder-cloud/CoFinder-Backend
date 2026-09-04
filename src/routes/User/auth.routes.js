@@ -9,7 +9,8 @@ const {
   submitQuestionnaire,
   getMyQuestionnaire,
   getMyProfile,
-  editProfile
+  editProfile,
+  saveFcmToken
 } = require("../../controllers/User/auth.controller");
 const { verifyToken } = require("../../middlewares/auth.middleware");
 
@@ -33,5 +34,10 @@ router.get(
   getQuestions
 );
 
+router.post(
+  "/fcm-token",
+  verifyToken,
+  saveFcmToken
+);
 
 module.exports = router;

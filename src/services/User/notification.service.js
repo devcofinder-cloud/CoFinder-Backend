@@ -1,66 +1,43 @@
-const Notification = require("../../models/notification.model");
+const { getMessaging } = require("firebase-admin/messaging");
+const firebaseApp = require("../../config/firebaseAdmin");
 
-const createNotification = async ({
-  recipient,
-  sender = null,
-  type,
+const sendPushNotification = async ({
+  tokens,
   title,
-  message,
+  body,
   data = {},
 }) => {
-  const notification = await Notification.create({
-    recipient,
-    sender,
-    type,
-    title,
-    message,
-    data,
-  });
+  if (!tokens || tokens.length === 0) {
+    return;
+  }
 
-  return notification;
-};
+  const message = {
+    tokens,
 
-const getUserNotifications = async (userId) => {
-  return await Notification.find({
-    recipient: userId,
-  })
-    .populate("sender", "name username profileImage")
-    .sort({ createdAt: -1 })
-    .limit(50);
-};
-
-const markAsRead = async (notificationId, userId) => {
-  return await Notification.findOneAndUpdate(
-    {
-      _id: notificationId,
-      recipient: userId,
+    notification: {
+      title,
+      body,
     },
-    {
-      isRead: true,
-      readAt: new Date(),
-    },
-    {
-      new: true,
-    }
+
+    data: Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        String(value),
+      ])
+    ),
+  };
+
+  const response = await getMessaging(firebaseApp).sendEachForMulticast(
+    message
   );
-};
 
-const markAllAsRead = async (userId) => {
-  return await Notification.updateMany(
-    {
-      recipient: userId,
-      isRead: false,
-    },
-    {
-      isRead: true,
-      readAt: new Date(),
-    }
+  console.log(
+    `✅ FCM: ${response.successCount} sent, ${response.failureCount} failed`
   );
+
+  return response;
 };
 
 module.exports = {
-  createNotification,
-  getUserNotifications,
-  markAsRead,
-  markAllAsRead,
+  sendPushNotification,
 };

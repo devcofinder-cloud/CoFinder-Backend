@@ -143,3 +143,29 @@ exports.editProfile = asyncHandler(async (req, res) => {
     updatedProfile,
   });
 });
+
+
+exports.saveFcmToken = asyncHandler(async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    throw new ApiError(400, "FCM token is required");
+  }
+
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $addToSet: {
+        fcmTokens: token,
+      },
+    },
+    { new: true }
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      "FCM token saved successfully"
+    )
+  );
+});
