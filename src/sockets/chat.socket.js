@@ -1,7 +1,11 @@
 const socketAuth = require("../middlewares/socketAuth.middleware");
 const messageService = require("../services/User/message.service");
 const cloudinary = require("../config/cloudinary");
-const notificationService = require("../services/User/notification.service");
+const User = require("../models/user.model");
+
+const {
+  sendPushNotification,
+} = require("../services/User/notification.service");
 
 const chatSocket = (io) => {
   // Authenticate socket connection
@@ -16,38 +20,42 @@ const chatSocket = (io) => {
     console.log(`User connected: ${userId}`);
 
     /*
-        |--------------------------------------------------------------------------
-        | JOIN CONVERSATION
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | JOIN CONVERSATION
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("join_conversation", ({ conversationId }) => {
       if (!conversationId) return;
 
       socket.join(`conversation:${conversationId}`);
 
-      console.log(`User ${userId} joined conversation ${conversationId}`);
+      console.log(
+        `User ${userId} joined conversation ${conversationId}`
+      );
     });
 
     /*
-        |--------------------------------------------------------------------------
-        | LEAVE CONVERSATION
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | LEAVE CONVERSATION
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("leave_conversation", ({ conversationId }) => {
       if (!conversationId) return;
 
       socket.leave(`conversation:${conversationId}`);
 
-      console.log(`User ${userId} left conversation ${conversationId}`);
+      console.log(
+        `User ${userId} left conversation ${conversationId}`
+      );
     });
 
     /*
-        |--------------------------------------------------------------------------
-        | SEND MESSAGE
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | SEND MESSAGE
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("sendMessage", async (data) => {
       try {
@@ -60,9 +68,14 @@ const chatSocket = (io) => {
           attachment,
         } = data;
 
+        /*
+        |--------------------------------------------------------------------------
+        | ATTACHMENT UPLOAD
+        |--------------------------------------------------------------------------
+        */
+
         let uploadedAttachment = null;
 
-        // Attachment upload
         if (attachment?.buffer) {
           const buffer = Buffer.from(attachment.buffer);
 
@@ -85,7 +98,7 @@ const chatSocket = (io) => {
                 } else {
                   resolve(result);
                 }
-              },
+              }
             );
 
             stream.end(buffer);
@@ -99,7 +112,12 @@ const chatSocket = (io) => {
           };
         }
 
-        // Save message
+        /*
+        |--------------------------------------------------------------------------
+        | SAVE MESSAGE
+        |--------------------------------------------------------------------------
+        */
+
         const message = await messageService.sendMessage({
           conversationId,
           senderId: userId,
@@ -110,22 +128,59 @@ const chatSocket = (io) => {
           attachment: uploadedAttachment,
         });
 
-        // Send message to conversation
-        io.to(`conversation:${conversationId}`).emit("new_message", message);
+        /*
+        |--------------------------------------------------------------------------
+        | REALTIME MESSAGE
+        |--------------------------------------------------------------------------
+        */
 
-        // Create notification
-        await notificationService.createNotification({
-          recipient: receiverId,
-          sender: userId,
-          type: "message",
-          title: "New message",
-          message: content?.trim() ? content : "Sent you an attachment",
-          data: {
-            conversationId,
-            messageId: message._id,
-          },
-          io,
-        });
+        io.to(`conversation:${conversationId}`).emit(
+          "new_message",
+          message
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | FCM PUSH NOTIFICATION
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+          const receiver = await User.findById(receiverId).select(
+            "fcmTokens name"
+          );
+
+          if (receiver?.fcmTokens?.length > 0) {
+            await sendPushNotification({
+              tokens: receiver.fcmTokens,
+
+              title: receiver.name
+                ? `Message from ${receiver.name}`
+                : "New message",
+
+              body: content?.trim()
+                ? content
+                : "Sent you an attachment",
+
+              data: {
+                type: "message",
+                conversationId: String(conversationId),
+                messageId: String(message._id),
+                senderId: String(userId),
+              },
+            });
+          } else {
+            console.log(
+              `No FCM tokens found for receiver: ${receiverId}`
+            );
+          }
+        } catch (fcmError) {
+          // FCM failure should NOT fail message sending
+          console.error(
+            "FCM notification error:",
+            fcmError.message
+          );
+        }
       } catch (error) {
         console.error("Send message error:", error);
 
@@ -136,41 +191,59 @@ const chatSocket = (io) => {
       }
     });
 
-    socket.on("delete_message", async ({ messageId, conversationId }) => {
-      try {
-        if (!messageId || !conversationId) {
-          return socket.emit("message_error", {
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE MESSAGE
+    |--------------------------------------------------------------------------
+    */
+
+    socket.on(
+      "delete_message",
+      async ({ messageId, conversationId }) => {
+        try {
+          if (!messageId || !conversationId) {
+            return socket.emit("message_error", {
+              success: false,
+              message:
+                "Message ID and conversation ID are required",
+            });
+          }
+
+          const message =
+            await messageService.deleteMessage(
+              messageId,
+              socket.user.id
+            );
+
+          io.to(`conversation:${conversationId}`).emit(
+            "message_deleted",
+            {
+              _id: String(message._id),
+              conversationId: String(conversationId),
+              isDeleted: true,
+              deletedAt: message.deletedAt,
+            }
+          );
+        } catch (error) {
+          console.error(
+            "Delete message socket error:",
+            error
+          );
+
+          socket.emit("message_error", {
             success: false,
-            message: "Message ID and conversation ID are required",
+            message:
+              error.message || "Failed to delete message",
           });
         }
-
-        const message = await messageService.deleteMessage(
-          messageId,
-          socket.user.id,
-        );
-
-        io.to(`conversation:${conversationId}`).emit("message_deleted", {
-          _id: String(message._id),
-          conversationId: String(conversationId),
-          isDeleted: true,
-          deletedAt: message.deletedAt,
-        });
-      } catch (error) {
-        console.error("Delete message socket error:", error);
-
-        socket.emit("message_error", {
-          success: false,
-          message: error.message || "Failed to delete message",
-        });
       }
-    });
+    );
 
     /*
-        |--------------------------------------------------------------------------
-        | EDIT MESSAGE
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | EDIT MESSAGE
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("editMessage", async (data) => {
       try {
@@ -184,73 +257,80 @@ const chatSocket = (io) => {
           throw new Error("Message content is required");
         }
 
-        const updatedMessage = await messageService.editMessage(
-          messageId,
-          userId,
-          content,
-        );
+        const updatedMessage =
+          await messageService.editMessage(
+            messageId,
+            userId,
+            content
+          );
 
-        const conversationId = updatedMessage.conversation?.toString();
+        const conversationId =
+          updatedMessage.conversation?.toString();
 
         if (!conversationId) {
           throw new Error("Conversation ID not found");
         }
 
         /*
-                |----------------------------------------------------------------------
-                | Send updated message to everyone
-                |----------------------------------------------------------------------
-                */
+        |--------------------------------------------------------------------------
+        | SEND UPDATED MESSAGE
+        |--------------------------------------------------------------------------
+        */
 
         io.to(`conversation:${conversationId}`).emit(
           "message_edited",
-          updatedMessage,
+          updatedMessage
         );
       } catch (error) {
         console.error("Edit message error:", error);
 
         socket.emit("message_error", {
           success: false,
-          message: error?.message || "Failed to edit message",
+          message:
+            error?.message || "Failed to edit message",
         });
       }
     });
 
     /*
-        |--------------------------------------------------------------------------
-        | TYPING
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | TYPING
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("typing", ({ conversationId }) => {
       if (!conversationId) return;
 
-      socket.to(`conversation:${conversationId}`).emit("user_typing", {
-        conversationId,
-        userId,
-      });
+      socket
+        .to(`conversation:${conversationId}`)
+        .emit("user_typing", {
+          conversationId,
+          userId,
+        });
     });
 
     /*
-        |--------------------------------------------------------------------------
-        | STOP TYPING
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | STOP TYPING
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("stop_typing", ({ conversationId }) => {
       if (!conversationId) return;
 
-      socket.to(`conversation:${conversationId}`).emit("user_stop_typing", {
-        conversationId,
-        userId,
-      });
+      socket
+        .to(`conversation:${conversationId}`)
+        .emit("user_stop_typing", {
+          conversationId,
+          userId,
+        });
     });
 
     /*
-        |--------------------------------------------------------------------------
-        | DISCONNECT
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | DISCONNECT
+    |--------------------------------------------------------------------------
+    */
 
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${userId}`);
