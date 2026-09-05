@@ -30,9 +30,7 @@ const chatSocket = (io) => {
 
       socket.join(`conversation:${conversationId}`);
 
-      console.log(
-        `User ${userId} joined conversation ${conversationId}`
-      );
+      console.log(`User ${userId} joined conversation ${conversationId}`);
     });
 
     /*
@@ -46,9 +44,7 @@ const chatSocket = (io) => {
 
       socket.leave(`conversation:${conversationId}`);
 
-      console.log(
-        `User ${userId} left conversation ${conversationId}`
-      );
+      console.log(`User ${userId} left conversation ${conversationId}`);
     });
 
     /*
@@ -98,7 +94,7 @@ const chatSocket = (io) => {
                 } else {
                   resolve(result);
                 }
-              }
+              },
             );
 
             stream.end(buffer);
@@ -134,10 +130,7 @@ const chatSocket = (io) => {
         |--------------------------------------------------------------------------
         */
 
-        io.to(`conversation:${conversationId}`).emit(
-          "new_message",
-          message
-        );
+        io.to(`conversation:${conversationId}`).emit("new_message", message);
 
         /*
         |--------------------------------------------------------------------------
@@ -146,9 +139,8 @@ const chatSocket = (io) => {
         */
 
         try {
-          const receiver = await User.findById(receiverId).select(
-            "fcmTokens name"
-          );
+          const receiver =
+            await User.findById(receiverId).select("fcmTokens name");
 
           if (receiver?.fcmTokens?.length > 0) {
             await sendPushNotification({
@@ -158,28 +150,23 @@ const chatSocket = (io) => {
                 ? `Message from ${receiver.name}`
                 : "New message",
 
-              body: content?.trim()
-                ? content
-                : "Sent you an attachment",
+              body: content?.trim() ? content : "Sent you an attachment",
 
               data: {
                 type: "message",
                 conversationId: String(conversationId),
                 messageId: String(message._id),
                 senderId: String(userId),
+
+                url: `/chat?conversationId=${conversationId}`,
               },
             });
           } else {
-            console.log(
-              `No FCM tokens found for receiver: ${receiverId}`
-            );
+            console.log(`No FCM tokens found for receiver: ${receiverId}`);
           }
         } catch (fcmError) {
           // FCM failure should NOT fail message sending
-          console.error(
-            "FCM notification error:",
-            fcmError.message
-          );
+          console.error("FCM notification error:", fcmError.message);
         }
       } catch (error) {
         console.error("Send message error:", error);
@@ -197,47 +184,35 @@ const chatSocket = (io) => {
     |--------------------------------------------------------------------------
     */
 
-    socket.on(
-      "delete_message",
-      async ({ messageId, conversationId }) => {
-        try {
-          if (!messageId || !conversationId) {
-            return socket.emit("message_error", {
-              success: false,
-              message:
-                "Message ID and conversation ID are required",
-            });
-          }
-
-          const message =
-            await messageService.deleteMessage(
-              messageId,
-              socket.user.id
-            );
-
-          io.to(`conversation:${conversationId}`).emit(
-            "message_deleted",
-            {
-              _id: String(message._id),
-              conversationId: String(conversationId),
-              isDeleted: true,
-              deletedAt: message.deletedAt,
-            }
-          );
-        } catch (error) {
-          console.error(
-            "Delete message socket error:",
-            error
-          );
-
-          socket.emit("message_error", {
+    socket.on("delete_message", async ({ messageId, conversationId }) => {
+      try {
+        if (!messageId || !conversationId) {
+          return socket.emit("message_error", {
             success: false,
-            message:
-              error.message || "Failed to delete message",
+            message: "Message ID and conversation ID are required",
           });
         }
+
+        const message = await messageService.deleteMessage(
+          messageId,
+          socket.user.id,
+        );
+
+        io.to(`conversation:${conversationId}`).emit("message_deleted", {
+          _id: String(message._id),
+          conversationId: String(conversationId),
+          isDeleted: true,
+          deletedAt: message.deletedAt,
+        });
+      } catch (error) {
+        console.error("Delete message socket error:", error);
+
+        socket.emit("message_error", {
+          success: false,
+          message: error.message || "Failed to delete message",
+        });
       }
-    );
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -257,15 +232,13 @@ const chatSocket = (io) => {
           throw new Error("Message content is required");
         }
 
-        const updatedMessage =
-          await messageService.editMessage(
-            messageId,
-            userId,
-            content
-          );
+        const updatedMessage = await messageService.editMessage(
+          messageId,
+          userId,
+          content,
+        );
 
-        const conversationId =
-          updatedMessage.conversation?.toString();
+        const conversationId = updatedMessage.conversation?.toString();
 
         if (!conversationId) {
           throw new Error("Conversation ID not found");
@@ -279,15 +252,14 @@ const chatSocket = (io) => {
 
         io.to(`conversation:${conversationId}`).emit(
           "message_edited",
-          updatedMessage
+          updatedMessage,
         );
       } catch (error) {
         console.error("Edit message error:", error);
 
         socket.emit("message_error", {
           success: false,
-          message:
-            error?.message || "Failed to edit message",
+          message: error?.message || "Failed to edit message",
         });
       }
     });
@@ -301,12 +273,10 @@ const chatSocket = (io) => {
     socket.on("typing", ({ conversationId }) => {
       if (!conversationId) return;
 
-      socket
-        .to(`conversation:${conversationId}`)
-        .emit("user_typing", {
-          conversationId,
-          userId,
-        });
+      socket.to(`conversation:${conversationId}`).emit("user_typing", {
+        conversationId,
+        userId,
+      });
     });
 
     /*
@@ -318,12 +288,10 @@ const chatSocket = (io) => {
     socket.on("stop_typing", ({ conversationId }) => {
       if (!conversationId) return;
 
-      socket
-        .to(`conversation:${conversationId}`)
-        .emit("user_stop_typing", {
-          conversationId,
-          userId,
-        });
+      socket.to(`conversation:${conversationId}`).emit("user_stop_typing", {
+        conversationId,
+        userId,
+      });
     });
 
     /*
