@@ -27,12 +27,11 @@ const sendPushNotification = async ({
     ),
   };
 
-  const response = await getMessaging(firebaseApp).sendEachForMulticast(
-    message
-  );
+  const response = await getMessaging(firebaseApp)
+    .sendEachForMulticast(message);
 
   console.log(
-    `✅ FCM: ${response.successCount} sent, ${response.failureCount} failed`
+    `FCM: ${response.successCount} sent, ${response.failureCount} failed`
   );
 
   return response;
