@@ -11,20 +11,22 @@ const sendPushNotification = async ({
     return;
   }
 
+  const uniqueTokens = [...new Set(tokens.filter(Boolean))];
+
   const message = {
-    tokens,
+    tokens: uniqueTokens,
 
-    notification: {
-      title,
-      body,
+    data: {
+      title: String(title || "CoFinder"),
+      body: String(body || "You have a new notification"),
+
+      ...Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key,
+          String(value),
+        ])
+      ),
     },
-
-    data: Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        String(value),
-      ])
-    ),
   };
 
   const response = await getMessaging(firebaseApp)
