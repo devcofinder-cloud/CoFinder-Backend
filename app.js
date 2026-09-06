@@ -33,6 +33,7 @@ app.use("/api/notification",require('./src/routes/User/notification.routes'));
 
 //admin
 app.use('/api/admin', require('./src/routes/admin/admin.auth.routes'))
+app.use('/api/admin/users', require('./src/routes/admin/user.routes'))
 app.use('/api/admin/question', require('./src/routes/admin/questionaire.routes'))
 app.use('/api/admin/profile-questions', require('./src/routes/admin/profileQuestions.routes'))
 
