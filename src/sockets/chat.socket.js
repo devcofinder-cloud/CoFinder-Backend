@@ -130,7 +130,14 @@ const chatSocket = (io) => {
         |--------------------------------------------------------------------------
         */
 
+        // Conversation ke andar jo users hain
         io.to(`conversation:${conversationId}`).emit("new_message", message);
+
+        // Chat list ke liye receiver ko
+        io.to(`user:${receiverId}`).emit("new_message", message);
+
+        // Sender ke dusre tabs/devices ke liye
+        io.to(`user:${userId}`).emit("new_message", message);
 
         /*
         |--------------------------------------------------------------------------
