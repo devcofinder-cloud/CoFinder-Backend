@@ -98,7 +98,7 @@ router.delete(
 );
 
 router.get(
-  "/:conversationId",
+  "/:conversationId/message-detail",
   verifyToken,
   getMessageDetails
 )
