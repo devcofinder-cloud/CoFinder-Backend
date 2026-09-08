@@ -14,6 +14,7 @@ const {
     getTotalUnreadCount,
     searchMessages,
     clearConversation,
+    getMessageDetails
 } = require("../../controllers/User/message.controller");
 
 const {verifyToken} = require("../../middlewares/auth.middleware");
@@ -95,6 +96,12 @@ router.delete(
     "/conversation/:conversationId/clear",
     clearConversation
 );
+
+router.get(
+  "/:conversationId",
+  verifyToken,
+  getMessageDetails
+)
 
 
 module.exports = router;

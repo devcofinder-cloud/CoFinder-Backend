@@ -509,7 +509,105 @@ const clearConversation = async (
 };
 
 
+
+
+const getMessageDetails = async (conversationId, userId) => {
+  // 1. Conversation find karo
+  const conversation = await Conversation.findById(conversationId)
+    .populate({
+      path: "participants",
+      select:
+        "_id name displayName email profileImage profileImageType username",
+    })
+    .lean();
+
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  // 2. Check user conversation ka participant hai ya nahi
+  const isParticipant = conversation.participants.some(
+    (participant) => participant._id.toString() === userId.toString()
+  );
+
+  if (!isParticipant) {
+    throw new Error("You are not a participant of this conversation");
+  }
+
+  // 3. Saare messages jisme attachment hai
+  const messages = await Message.find({
+    conversation: conversationId,
+    attachment: { $ne: null },
+  })
+    .select(
+      "_id sender receiver messageType attachment createdAt"
+    )
+    .populate({
+      path: "sender",
+      select: "_id name displayName email profileImage profileImageType",
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // 4. Sirf media/files ka clean response
+  const mediaFiles = messages
+    .filter(
+      (message) =>
+        message.attachment &&
+        message.attachment.url
+    )
+    .map((message) => ({
+      messageId: message._id,
+      messageType: message.messageType,
+
+      url: message.attachment.url,
+      name: message.attachment.name,
+      type: message.attachment.type,
+      size: message.attachment.size,
+
+      sender: message.sender
+        ? {
+            _id: message.sender._id,
+            name: message.sender.name,
+            displayName: message.sender.displayName,
+            email: message.sender.email,
+            profileImage: message.sender.profileImage,
+            profileImageType: message.sender.profileImageType,
+          }
+        : null,
+
+      createdAt: message.createdAt,
+    }));
+
+  // 5. Other participant nikal lo
+  const otherParticipant = conversation.participants.find(
+    (participant) =>
+      participant._id.toString() !== userId.toString()
+  );
+
+  return {
+    conversationId: conversation._id,
+
+    user: otherParticipant
+      ? {
+          _id: otherParticipant._id,
+          name: otherParticipant.name,
+          displayName: otherParticipant.displayName,
+          email: otherParticipant.email,
+          username: otherParticipant.username,
+          profileImage: otherParticipant.profileImage,
+          profileImageType: otherParticipant.profileImageType,
+        }
+      : null,
+
+    mediaFiles,
+    totalMedia: mediaFiles.length,
+  };
+};
+
+
 module.exports = {
+    getMessageDetails,
     sendMessage,
     getMessages,
     getMessageById,

@@ -179,6 +179,31 @@ const clearConversation = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Conversation messages cleared", result));
 });
 
+const getMessageDetails = asyncHandler(async (req, res) => {
+  const { conversationId } = req.params;
+
+  const userId = req.user._id;
+
+  if (!conversationId) {
+    return res.status(400).json({
+      success: false,
+      message: "Conversation ID is required",
+    });
+  }
+
+  const details =
+    await messageDetailService.getMessageDetails(
+      conversationId,
+      userId
+    );
+
+  return res.status(200).json({
+    success: true,
+    message: "Message details fetched successfully",
+    data: details,
+  });
+});
+
 module.exports = {
   sendMessage,
   getMessages,
@@ -191,4 +216,5 @@ module.exports = {
   getTotalUnreadCount,
   searchMessages,
   clearConversation,
+  getMessageDetails
 };
