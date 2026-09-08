@@ -192,7 +192,7 @@ const getMessageDetails = asyncHandler(async (req, res) => {
   }
 
   const details =
-    await messageDetailService.getMessageDetails(
+    await messageService.getMessageDetails(
       conversationId,
       userId
     );
