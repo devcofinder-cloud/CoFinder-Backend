@@ -28,6 +28,7 @@ app.use("/api/posts",require('./src/routes/User/post.routes'));
 app.use("/api/dashboard",require('./src/routes/User/userDashboard.routes'));
 app.use("/api/professional",require('./src/routes/User/professionalProfile.routes'));
 app.use("/api/notification",require('./src/routes/User/notification.routes'));
+app.use("/api/profile-count",require('./src/routes/User/profileView.routes'));
 
 
 
