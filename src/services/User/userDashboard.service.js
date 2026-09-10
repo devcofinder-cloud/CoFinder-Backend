@@ -249,6 +249,65 @@ const getNearbyUsers = async (userId, limit = 10) => {
 
 
 
+const universalSearch = async (userId, query = "", limit = 10) => {
+    const search = query.trim();
+
+    const userFilter = {
+        _id: { $ne: userId },
+        role: "user",
+    };
+
+    const postFilter = {
+        isDeleted: false,
+    };
+
+    if (search) {
+        const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+
+        userFilter.$or = [
+            { name: regex },
+            { username: regex },
+            { displayName: regex },
+            { archetype: regex },
+            { location: regex },
+        ];
+
+        postFilter.content = regex;
+    }
+
+    const [users, posts] = await Promise.all([
+        User.find(userFilter)
+            .select(
+                "_id name username displayName profileImage location archetype completionStatus role"
+            )
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .lean(),
+
+        Post.find(postFilter)
+            .populate(
+                "author",
+                "_id name username displayName profileImage location archetype"
+            )
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .lean(),
+    ]);
+
+    return {
+        query: search,
+        users,
+        posts,
+        counts: {
+            users: users.length,
+            posts: posts.length,
+            total: users.length + posts.length,
+        },
+    };
+};
+
+
+
 
 
 
@@ -259,5 +318,5 @@ module.exports = {
    getRecommendedUsers,
   getSameArchetypeUsers,
   getNearbyUsers,
-  
+  universalSearch
 };

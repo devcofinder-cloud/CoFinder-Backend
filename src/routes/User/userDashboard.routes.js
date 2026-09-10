@@ -5,7 +5,7 @@ const router = express.Router();
 const {verifyToken} = require("../../middlewares/auth.middleware");
 const {
     getUsers,
-    getUserProfileWithPosts,getUserProfileById,
+    getUserProfileWithPosts,getUserProfileById,universalSearch,
     getPostsByUserId,getRecommendedUsers,getSameArchetypeUsers,getNearbyUsers
 
 } = require("../../controllers/User/userDashboard.controller");
@@ -34,6 +34,13 @@ router.get(
 router.get("/nearby",
   verifyToken,
   getNearbyUsers
+);
+
+
+router.get(
+    "/search",
+    verifyToken,
+    universalSearch
 );
 
 module.exports = router;
