@@ -94,8 +94,8 @@ const getRecommendedUsers = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(
       200,
-      users,
-      "Recommended founders fetched successfully"
+      "Recommended founders fetched successfully",
+       users
     )
   );
 });
@@ -118,8 +118,8 @@ const getSameArchetypeUsers = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(
       200,
-      users,
-      "Same archetype users fetched successfully"
+      "Same archetype users fetched successfully",
+      users
     )
   );
 });
@@ -142,8 +142,9 @@ const getNearbyUsers = asyncHandler(async (req, res) => {
   return res.status(200).json(
     new ApiResponse(
       200,
-      users,
-      "Nearby users fetched successfully"
+      
+      "Nearby users fetched successfully",
+      users
     )
   );
 });
