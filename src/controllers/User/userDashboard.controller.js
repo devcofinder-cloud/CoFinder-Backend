@@ -73,9 +73,90 @@ const getPostsByUserId = asyncHandler(async (req, res) => {
   );
 });
 
+
+
+
+
+// GET /api/discovery/recommended
+const getRecommendedUsers = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const limit = Math.min(
+    Math.max(Number(req.query.limit) || 10, 1),
+    50
+  );
+
+  const users = await userService.getRecommendedUsers(
+    userId,
+    limit
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      users,
+      "Recommended founders fetched successfully"
+    )
+  );
+});
+
+
+// GET /api/discovery/same-archetype
+const getSameArchetypeUsers = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const limit = Math.min(
+    Math.max(Number(req.query.limit) || 10, 1),
+    50
+  );
+
+  const users = await userService.getSameArchetypeUsers(
+    userId,
+    limit
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      users,
+      "Same archetype users fetched successfully"
+    )
+  );
+});
+
+
+// GET /api/discovery/nearby
+const getNearbyUsers = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const limit = Math.min(
+    Math.max(Number(req.query.limit) || 10, 1),
+    50
+  );
+
+  const users = await userService.getNearbyUsers(
+    userId,
+    limit
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      users,
+      "Nearby users fetched successfully"
+    )
+  );
+});
+
+
+
+
 module.exports = {
     getUsers,
     getUserProfileWithPosts,
     getUserProfileById,
+     getRecommendedUsers,
+  getSameArchetypeUsers,
+  getNearbyUsers,
     getPostsByUserId
 };

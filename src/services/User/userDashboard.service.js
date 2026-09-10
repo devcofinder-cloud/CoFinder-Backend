@@ -123,11 +123,131 @@ const getUserProfileById = async ({ userId }) => {
 
 
 
-const getPostsByUserId = async({userId})=>{
-  
-  const posts = await Post.find({author: userId})
-  return posts
-}
+const getRecommendedUsers = async (userId, limit = 10) => {
+  const currentUser = await User.findById(userId).select(
+    "name username displayName location age gender archetype role profileImage profileImageType completionStatus"
+  );
+
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+
+  const users = await User.find({
+    _id: { $ne: userId },
+    role: "user",
+    completionStatus: { $gte: 50 },
+  })
+    .select(
+      "name username displayName location age gender archetype role profileImage profileImageType completionStatus"
+    )
+    .limit(100)
+    .lean();
+
+  // Simple recommendation scoring
+  const scoredUsers = users.map((user) => {
+    let score = 0;
+
+    // Same archetype
+    if (
+      currentUser.archetype &&
+      user.archetype &&
+      currentUser.archetype === user.archetype
+    ) {
+      score += 40;
+    }
+
+    // Same location
+    if (
+      currentUser.location &&
+      user.location &&
+      currentUser.location.toLowerCase() === user.location.toLowerCase()
+    ) {
+      score += 20;
+    }
+
+    // Different gender can add diversity
+    if (
+      currentUser.gender &&
+      user.gender &&
+      currentUser.gender !== user.gender
+    ) {
+      score += 5;
+    }
+
+    // Profile completion
+    if (user.completionStatus >= 80) {
+      score += 15;
+    } else if (user.completionStatus >= 60) {
+      score += 10;
+    }
+
+    return {
+      ...user,
+      recommendationScore: score,
+    };
+  });
+
+  return scoredUsers
+    .sort((a, b) => b.recommendationScore - a.recommendationScore)
+    .slice(0, Number(limit));
+};
+
+
+const getSameArchetypeUsers = async (userId, limit = 10) => {
+  const currentUser = await User.findById(userId).select("archetype");
+
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+
+  if (!currentUser.archetype) {
+    return [];
+  }
+
+  return await User.find({
+    _id: { $ne: userId },
+    role: "user",
+    archetype: currentUser.archetype,
+    completionStatus: { $gte: 50 },
+  })
+    .select(
+      "name username displayName location age gender archetype profileImage profileImageType completionStatus"
+    )
+    .sort({ completionStatus: -1, createdAt: -1 })
+    .limit(Number(limit))
+    .lean();
+};
+
+
+const getNearbyUsers = async (userId, limit = 10) => {
+  const currentUser = await User.findById(userId).select("location");
+
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+
+  if (!currentUser.location) {
+    return [];
+  }
+
+  return await User.find({
+    _id: { $ne: userId },
+    role: "user",
+    location: {
+      $regex: new RegExp(`^${currentUser.location}$`, "i"),
+    },
+    completionStatus: { $gte: 50 },
+  })
+    .select(
+      "name username displayName location age gender archetype profileImage profileImageType completionStatus"
+    )
+    .sort({ completionStatus: -1, createdAt: -1 })
+    .limit(Number(limit))
+    .lean();
+};
+
+
+
 
 
 
@@ -136,5 +256,8 @@ module.exports = {
   getUsers,
   getUserProfileWithPosts,
   getUserProfileById,
-  getPostsByUserId
+   getRecommendedUsers,
+  getSameArchetypeUsers,
+  getNearbyUsers,
+  
 };
