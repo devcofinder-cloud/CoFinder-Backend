@@ -165,7 +165,7 @@ const chatSocket = (io) => {
                 messageId: String(message._id),
                 senderId: String(userId),
 
-                url: `/chat?conversationId=${conversationId}`,
+                url: `/chat/${conversationId}`,
               },
             });
           } else {
