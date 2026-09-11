@@ -60,6 +60,30 @@ router.delete(
 );
 
 
+router.post(
+  "/:postId/like",
+  verifyToken,
+  postController.toggleLike
+);
+
+router.post(
+  "/:postId/comments",
+  verifyToken,
+  postController.addComment
+);
+
+router.get(
+  "/:postId/comments",
+  verifyToken,
+  postController.getComments
+);
+
+router.delete(
+  "/comments/:commentId",
+  verifyToken,
+  postController.deleteComment
+);
+
 
 
 module.exports = router;
