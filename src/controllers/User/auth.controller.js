@@ -32,13 +32,80 @@ exports.login = asyncHandler(async (req, res) => {
   );
 });
 
-exports.googleLogin = asyncHandler(async (req, res) => {
-  const { token } = req.body;
 
-  const data = await googleLoginService(token);
 
-  res.status(200).json(new ApiResponse(200, "Login Successful", data));
-});
+exports.googleLogin = async (req, res) => {
+  try {
+    const { firebaseToken } = req.body;
+
+    if (!firebaseToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Firebase token is required",
+      });
+    }
+
+    // Verify Firebase token
+    const decodedToken = await admin
+      .auth()
+      .verifyIdToken(firebaseToken);
+
+    const {
+      uid,
+      email,
+      name,
+      picture,
+    } = decodedToken;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google account email not found",
+      });
+    }
+
+    // Find existing user
+    let user = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    // Create user if doesn't exist
+    if (!user) {
+      user = await User.create({
+        name: name || "Google User",
+        email: email.toLowerCase(),
+        profileImage: picture || "",
+        firebaseUid: uid,
+        authProvider: "google",
+      });
+    } else {
+      // Save Firebase UID if old account doesn't have it
+      if (!user.firebaseUid) {
+        user.firebaseUid = uid;
+        await user.save();
+      }
+    }
+
+    // Your existing JWT function
+    const token = generateAccessToken(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("Google Login Error:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid Google authentication",
+    });
+  }
+};
 
 // ================= GET ACTIVE QUESTIONS =================
 

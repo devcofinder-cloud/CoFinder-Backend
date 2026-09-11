@@ -6,8 +6,6 @@ const {
   login,
   googleLogin,
   getQuestions,
-  submitQuestionnaire,
-  getMyQuestionnaire,
   getMyProfile,
   editProfile,
   saveFcmToken

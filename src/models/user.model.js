@@ -43,7 +43,6 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
       select: true,
     },
@@ -53,7 +52,7 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "enterprise", "employer", "admin"],
       default: "user",
     },
-    googleId: {
+    firebaseUid: {
       type: String,
       default: null,
     },
