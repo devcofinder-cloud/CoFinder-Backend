@@ -12,6 +12,7 @@ const {
   getMyProfile,
   updateUserProfile
 } = require("../../services/User/auth.service");
+const firebaseApp = require("../../config/firebaseAdmin");
 
 exports.register = asyncHandler(async (req, res) => {
   const user = await registerService(req.body);
@@ -46,7 +47,7 @@ exports.googleLogin = async (req, res) => {
     }
 
     // Verify Firebase token
-    const decodedToken = await admin
+    const decodedToken = await firebaseApp
       .auth()
       .verifyIdToken(firebaseToken);
 
