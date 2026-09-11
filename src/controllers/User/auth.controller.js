@@ -2,6 +2,9 @@ const asyncHandler = require("../../utils/asyncHandler");
 const ApiResponse = require("../../utils/ApiResponse");
 const cloudinary = require('../../config/cloudinary')
 const User = require('../../models/user.model')
+const firebaseApp = require("../../config/firebaseAdmin");
+const jwt = require("jsonwebtoken");
+const { getAuth } = require("firebase-admin/auth");
 const {
   loginService,
   registerService,
@@ -12,7 +15,7 @@ const {
   getMyProfile,
   updateUserProfile
 } = require("../../services/User/auth.service");
-const firebaseApp = require("../../config/firebaseAdmin");
+
 
 exports.register = asyncHandler(async (req, res) => {
   const user = await registerService(req.body);
@@ -39,6 +42,9 @@ exports.googleLogin = async (req, res) => {
   try {
     const { firebaseToken } = req.body;
 
+    console.log("🔥 GOOGLE LOGIN HIT");
+    console.log("Token exists:", !!firebaseToken);
+
     if (!firebaseToken) {
       return res.status(400).json({
         success: false,
@@ -46,17 +52,15 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    // Verify Firebase token
-    const decodedToken = await firebaseApp
-      .auth()
-      .verifyIdToken(firebaseToken);
+    console.log("🔐 Verifying Firebase token...");
 
-    const {
-      uid,
-      email,
-      name,
-      picture,
-    } = decodedToken;
+const decodedToken = await getAuth(firebaseApp).verifyIdToken(firebaseToken);
+    console.log("✅ FIREBASE VERIFIED");
+    console.log("UID:", decodedToken.uid);
+    console.log("EMAIL:", decodedToken.email);
+    console.log("NAME:", decodedToken.name);
+
+    const { uid, email, name, picture } = decodedToken;
 
     if (!email) {
       return res.status(400).json({
@@ -65,30 +69,39 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    // Find existing user
     let user = await User.findOne({
       email: email.toLowerCase(),
     });
 
-    // Create user if doesn't exist
     if (!user) {
+      console.log("🆕 Creating Google user...");
+
       user = await User.create({
         name: name || "Google User",
         email: email.toLowerCase(),
-        profileImage: picture || "",
-        firebaseUid: uid,
-        authProvider: "google",
+        googleId: uid,
+        provider: "google",
+        profileImage: picture || null,
+        role: "user",
       });
     } else {
-      // Save Firebase UID if old account doesn't have it
-      if (!user.firebaseUid) {
-        user.firebaseUid = uid;
-        await user.save();
+      console.log("👤 Existing user found:", user.email);
+
+      if (!user.googleId) {
+        user.googleId = uid;
       }
+
+      await user.save();
     }
 
-    // Your existing JWT function
-    const token = generateAccessToken(user._id);
+    console.log("✅ USER READY:", user._id);
+
+    // IMPORTANT:
+    // yahan apna existing JWT function use karna
+    const token = jwt.sign({id: user._id},process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    });
 
     return res.status(200).json({
       success: true,
@@ -99,11 +112,15 @@ exports.googleLogin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Google Login Error:", error);
+    console.error("🔥🔥 GOOGLE LOGIN ERROR 🔥🔥");
+    console.error("NAME:", error.name);
+    console.error("MESSAGE:", error.message);
+    console.error("CODE:", error.code);
+    console.error("STACK:", error.stack);
 
     return res.status(401).json({
       success: false,
-      message: "Invalid Google authentication",
+      message: error.message || "Invalid Google authentication",
     });
   }
 };
