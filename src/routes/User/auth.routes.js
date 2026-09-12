@@ -8,7 +8,8 @@ const {
   getQuestions,
   getMyProfile,
   editProfile,
-  saveFcmToken
+  saveFcmToken,
+  googleRegister
 } = require("../../controllers/User/auth.controller");
 const { verifyToken } = require("../../middlewares/auth.middleware");
 
@@ -19,6 +20,7 @@ const upload = require('../../middlewares/upload.middleware')
 router.post("/register", register);
 router.post("/login", login);
 router.post("/google-login", googleLogin);
+router.post("/google-register", googleRegister);
 
 
 router.get("/me", verifyToken, getMyProfile);
