@@ -1,4 +1,5 @@
 const Post = require("../../models/post.model");
+const User = require("../../models/user.model");
 const ApiError = require("../../utils/ApiError");
 const cloudinary = require("../../config/cloudinary");
 const Comment = require("../../models/comment.model");
