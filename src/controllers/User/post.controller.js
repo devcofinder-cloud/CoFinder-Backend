@@ -185,6 +185,43 @@ const deleteComment = asyncHandler(async (req, res) => {
 });
 
 
+
+const toggleSavePostController = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+
+  const result = await postService.toggleSavePost({
+    userId: req.user._id,
+    postId,
+  });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        result,
+        result.saved
+          ? "Post saved successfully"
+          : "Post removed from saved posts"
+      )
+    );
+});
+
+
+const getSavedPostsController = asyncHandler(async (req, res) => {
+  const posts = await postService.getSavedPosts({
+    userId: req.user._id,
+  });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      posts,
+      "Saved posts fetched successfully"
+    )
+  );
+});
+
 module.exports = {
     createPost,
     getAllPosts,
@@ -195,5 +232,7 @@ module.exports = {
     deleteComment,
     toggleLike,
     addComment,
-    getComments
+    getComments,
+    toggleSavePostController,
+    getSavedPostsController
 };

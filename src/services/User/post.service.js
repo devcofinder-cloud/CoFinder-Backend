@@ -261,6 +261,62 @@ const deleteComment = async ({ commentId, userId }) => {
   return comment;
 };
 
+
+const toggleSavePost = async ({ userId, postId }) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const post = await Post.findOne({
+    _id: postId,
+    isDeleted: false,
+  });
+
+  if (!post) {
+    throw new ApiError(404, "Post not found");
+  }
+
+  const alreadySaved = user.savedPosts.some(
+    (id) => id.toString() === postId.toString()
+  );
+
+  if (alreadySaved) {
+    user.savedPosts = user.savedPosts.filter(
+      (id) => id.toString() !== postId.toString()
+    );
+  } else {
+    user.savedPosts.push(postId);
+  }
+
+  await user.save();
+
+  return {
+    saved: !alreadySaved,
+    savedCount: user.savedPosts.length,
+  };
+};
+
+
+const getSavedPosts = async ({ userId }) => {
+  const user = await User.findById(userId).populate({
+    path: "savedPosts",
+    match: {
+      isDeleted: false,
+    },
+    populate: {
+      path: "author",
+      select: "name username profileImage avatar email",
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return user.savedPosts || [];
+};
 module.exports = {
   createPost,
   getAllPosts,
@@ -271,5 +327,7 @@ module.exports = {
   toggleLike,
   getComments,
   addComment,
-  deleteComment
+  deleteComment,
+  toggleSavePost,
+  getSavedPosts
 };

@@ -85,5 +85,18 @@ router.delete(
 );
 
 
+router.post(
+  "/:postId/save",
+  verifyToken,
+  postController.toggleSavePostController
+);
+
+router.get(
+  "/saved",
+  verifyToken,
+  postController.getSavedPostsController
+);
+
+
 
 module.exports = router;
