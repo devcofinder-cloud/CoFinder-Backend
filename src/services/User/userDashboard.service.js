@@ -35,6 +35,7 @@ const getUserProfileWithPosts = async ({ userId }) => {
         author: {
           $in: userIds,
         },
+        isDeleted:false
       },
     },
 
@@ -56,6 +57,8 @@ const getUserProfileWithPosts = async ({ userId }) => {
         _id: 1,
         content: 1,
         media: 1,
+        likes: 1,
+        commentsCount: 1,
         createdAt: 1,
         updatedAt: 1,
 
@@ -121,11 +124,9 @@ const getUserProfileById = async ({ userId }) => {
   };
 };
 
-
-
 const getRecommendedUsers = async (userId, limit = 10) => {
   const currentUser = await User.findById(userId).select(
-    "name username displayName location age gender archetype role profileImage profileImageType completionStatus"
+    "name username displayName location age gender archetype role profileImage profileImageType completionStatus",
   );
 
   if (!currentUser) {
@@ -138,7 +139,7 @@ const getRecommendedUsers = async (userId, limit = 10) => {
     completionStatus: { $gte: 50 },
   })
     .select(
-      "name username displayName location age gender archetype role profileImage profileImageType completionStatus"
+      "name username displayName location age gender archetype role profileImage profileImageType completionStatus",
     )
     .limit(100)
     .lean();
@@ -192,7 +193,6 @@ const getRecommendedUsers = async (userId, limit = 10) => {
     .slice(0, Number(limit));
 };
 
-
 const getSameArchetypeUsers = async (userId, limit = 10) => {
   const currentUser = await User.findById(userId).select("archetype");
 
@@ -211,13 +211,12 @@ const getSameArchetypeUsers = async (userId, limit = 10) => {
     completionStatus: { $gte: 50 },
   })
     .select(
-      "name username displayName location age gender archetype profileImage profileImageType completionStatus"
+      "name username displayName location age gender archetype profileImage profileImageType completionStatus",
     )
     .sort({ completionStatus: -1, createdAt: -1 })
     .limit(Number(limit))
     .lean();
 };
-
 
 const getNearbyUsers = async (userId, limit = 10) => {
   const currentUser = await User.findById(userId).select("location");
@@ -239,84 +238,79 @@ const getNearbyUsers = async (userId, limit = 10) => {
     completionStatus: { $gte: 50 },
   })
     .select(
-      "name username displayName location age gender archetype profileImage profileImageType completionStatus"
+      "name username displayName location age gender archetype profileImage profileImageType completionStatus",
     )
     .sort({ completionStatus: -1, createdAt: -1 })
     .limit(Number(limit))
     .lean();
 };
 
-
-
-
 const universalSearch = async (userId, query = "", limit = 10) => {
-    const search = query.trim();
+  const search = query.trim();
 
-    const userFilter = {
-        _id: { $ne: userId },
-        role: "user",
-    };
+  const userFilter = {
+    _id: { $ne: userId },
+    role: "user",
+  };
 
-    const postFilter = {
-        isDeleted: false,
-    };
+  const postFilter = {
+    isDeleted: false,
+  };
 
-    if (search) {
-        const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  if (search) {
+    const regex = new RegExp(
+      search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "i",
+    );
 
-        userFilter.$or = [
-            { name: regex },
-            { username: regex },
-            { displayName: regex },
-            { archetype: regex },
-            { location: regex },
-        ];
+    userFilter.$or = [
+      { name: regex },
+      { username: regex },
+      { displayName: regex },
+      { archetype: regex },
+      { location: regex },
+    ];
 
-        postFilter.content = regex;
-    }
+    postFilter.content = regex;
+  }
 
-    const [users, posts] = await Promise.all([
-        User.find(userFilter)
-            .select(
-                "_id name username displayName profileImage location archetype completionStatus role"
-            )
-            .sort({ createdAt: -1 })
-            .limit(Number(limit))
-            .lean(),
+  const [users, posts] = await Promise.all([
+    User.find(userFilter)
+      .select(
+        "_id name username displayName profileImage location archetype completionStatus role",
+      )
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .lean(),
 
-        Post.find(postFilter)
-            .populate(
-                "author",
-                "_id name username displayName profileImage location archetype"
-            )
-            .sort({ createdAt: -1 })
-            .limit(Number(limit))
-            .lean(),
-    ]);
+    Post.find(postFilter)
+      .populate(
+        "author",
+        "_id name username displayName profileImage location archetype",
+      )
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .lean(),
+  ]);
 
-    return {
-        query: search,
-        users,
-        posts,
-        counts: {
-            users: users.length,
-            posts: posts.length,
-            total: users.length + posts.length,
-        },
-    };
+  return {
+    query: search,
+    users,
+    posts,
+    counts: {
+      users: users.length,
+      posts: posts.length,
+      total: users.length + posts.length,
+    },
+  };
 };
-
-
-
-
-
 
 module.exports = {
   getUsers,
   getUserProfileWithPosts,
   getUserProfileById,
-   getRecommendedUsers,
+  getRecommendedUsers,
   getSameArchetypeUsers,
   getNearbyUsers,
-  universalSearch
+  universalSearch,
 };
