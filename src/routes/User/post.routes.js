@@ -35,6 +35,12 @@ router.get("/my-post",
 )
 
 
+router.get(
+  "/saved",
+  verifyToken,
+  postController.getSavedPostsController
+);
+
 
 // Get single post
 router.get(
@@ -91,11 +97,7 @@ router.post(
   postController.toggleSavePostController
 );
 
-router.get(
-  "/saved",
-  verifyToken,
-  postController.getSavedPostsController
-);
+
 
 
 
