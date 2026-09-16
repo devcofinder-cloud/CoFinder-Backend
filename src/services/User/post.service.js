@@ -141,7 +141,6 @@ const getMyPosts = async ({ userId }) => {
   return posts;
 };
 
-
 // Like / Unlike post
 const toggleLike = async ({ postId, userId }) => {
   const post = await Post.findOne({
@@ -155,14 +154,10 @@ const toggleLike = async ({ postId, userId }) => {
 
   const userIdString = userId.toString();
 
-  const alreadyLiked = post.likes.some(
-    (id) => id.toString() === userIdString
-  );
+  const alreadyLiked = post.likes.some((id) => id.toString() === userIdString);
 
   if (alreadyLiked) {
-    post.likes = post.likes.filter(
-      (id) => id.toString() !== userIdString
-    );
+    post.likes = post.likes.filter((id) => id.toString() !== userIdString);
   } else {
     post.likes.push(userId);
   }
@@ -202,12 +197,11 @@ const addComment = async ({ postId, userId, content }) => {
 
   const populatedComment = await Comment.findById(comment._id).populate(
     "author",
-    "name email profileImage"
+    "name email profileImage",
   );
 
   return populatedComment;
 };
-
 
 const getComments = async ({ postId }) => {
   const post = await Post.findOne({
@@ -231,7 +225,6 @@ const getComments = async ({ postId }) => {
   return comments;
 };
 
-
 const deleteComment = async ({ commentId, userId }) => {
   const comment = await Comment.findOne({
     _id: commentId,
@@ -243,10 +236,7 @@ const deleteComment = async ({ commentId, userId }) => {
   }
 
   if (comment.author.toString() !== userId.toString()) {
-    throw new ApiError(
-      403,
-      "You can only delete your own comment"
-    );
+    throw new ApiError(403, "You can only delete your own comment");
   }
 
   comment.isDeleted = true;
@@ -261,7 +251,6 @@ const deleteComment = async ({ commentId, userId }) => {
 
   return comment;
 };
-
 
 const toggleSavePost = async ({ userId, postId }) => {
   const user = await User.findById(userId);
@@ -280,12 +269,12 @@ const toggleSavePost = async ({ userId, postId }) => {
   }
 
   const alreadySaved = user.savedPosts.some(
-    (id) => id.toString() === postId.toString()
+    (id) => id.toString() === postId.toString(),
   );
 
   if (alreadySaved) {
     user.savedPosts = user.savedPosts.filter(
-      (id) => id.toString() !== postId.toString()
+      (id) => id.toString() !== postId.toString(),
     );
   } else {
     user.savedPosts.push(postId);
@@ -298,7 +287,6 @@ const toggleSavePost = async ({ userId, postId }) => {
     savedCount: user.savedPosts.length,
   };
 };
-
 
 const getSavedPosts = async ({ userId }) => {
   const user = await User.findById(userId).populate({
@@ -318,6 +306,88 @@ const getSavedPosts = async ({ userId }) => {
 
   return user.savedPosts || [];
 };
+
+const toggleUpvote = async (postId, userId) => {
+  const post = await Post.findById(postId);
+
+  if (!post || post.isDeleted) {
+    throw new Error("Post not found");
+  }
+
+  const hasUpvoted = post.upvotes.some(
+    (id) => id.toString() === userId.toString(),
+  );
+
+  if (hasUpvoted) {
+    post.upvotes.pull(userId);
+  } else {
+    post.upvotes.push(userId);
+    post.downvotes.pull(userId);
+  }
+
+  await post.save();
+
+  return {
+    upvoted: !hasUpvoted,
+    downvoted: false,
+    upvotesCount: post.upvotes.length,
+    downvotesCount: post.downvotes.length,
+  };
+};
+
+const toggleDownvote = async (postId, userId) => {
+  const post = await Post.findById(postId);
+
+  if (!post || post.isDeleted) {
+    throw new Error("Post not found");
+  }
+
+  const hasDownvoted = post.downvotes.some(
+    (id) => id.toString() === userId.toString(),
+  );
+
+  if (hasDownvoted) {
+    post.downvotes.pull(userId);
+  } else {
+    post.downvotes.push(userId);
+    post.upvotes.pull(userId);
+  }
+
+  await post.save();
+
+  return {
+    upvoted: false,
+    downvoted: !hasDownvoted,
+    upvotesCount: post.upvotes.length,
+    downvotesCount: post.downvotes.length,
+  };
+};
+
+
+const getPostVotes = async (postId, userId) => {
+    const post = await Post.findById(postId)
+        .select("upvotes downvotes");
+
+    if (!post) {
+        throw new Error("Post not found");
+    }
+
+    const hasUpvoted = post.upvotes.some(
+        (id) => id.toString() === userId.toString()
+    );
+
+    const hasDownvoted = post.downvotes.some(
+        (id) => id.toString() === userId.toString()
+    );
+
+    return {
+        upvotesCount: post.upvotes.length,
+        downvotesCount: post.downvotes.length,
+        hasUpvoted,
+        hasDownvoted,
+    };
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -330,5 +400,8 @@ module.exports = {
   addComment,
   deleteComment,
   toggleSavePost,
-  getSavedPosts
+  getSavedPosts,
+  toggleUpvote,
+  toggleDownvote,
+  getPostVotes
 };

@@ -51,6 +51,20 @@ const postSchema = new mongoose.Schema(
             },
         ],
 
+        upvotes: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
+
+        downvotes: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
+
         commentsCount: {
             type: Number,
             default: 0,

@@ -223,6 +223,70 @@ const getSavedPostsController = asyncHandler(async (req, res) => {
   );
 });
 
+
+const handleUpvote = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user._id;
+
+        const result = await postService.toggleUpvote(postId, userId);
+
+        return res.status(200).json({
+            success: true,
+            message: result.upvoted
+                ? "Post upvoted"
+                : "Upvote removed",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const handleDownvote = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user._id;
+
+        const result = await postService.toggleDownvote(postId, userId);
+
+        return res.status(200).json({
+            success: true,
+            message: result.downvoted
+                ? "Post downvoted"
+                : "Downvote removed",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+const getVotes = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user._id;
+
+        const result = await getPostVotes(postId, userId);
+
+        return res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
 module.exports = {
     createPost,
     getAllPosts,
@@ -235,5 +299,8 @@ module.exports = {
     addComment,
     getComments,
     toggleSavePostController,
-    getSavedPostsController
+    getSavedPostsController,
+    handleUpvote,
+    handleDownvote,
+    getVotes
 };

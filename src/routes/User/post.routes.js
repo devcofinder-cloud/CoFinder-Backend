@@ -98,7 +98,11 @@ router.post(
 );
 
 
+router.post("/:postId/upvote", verifyToken, postController.handleUpvote);
 
+router.post("/:postId/downvote", verifyToken, postController.handleDownvote);
+
+router.get("/:postId/votes", verifyToken, postController.getVotes);
 
 
 module.exports = router;
