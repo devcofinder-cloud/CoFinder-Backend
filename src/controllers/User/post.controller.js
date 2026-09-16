@@ -273,7 +273,7 @@ const getVotes = async (req, res) => {
         const { postId } = req.params;
         const userId = req.user._id;
 
-        const result = await getPostVotes(postId, userId);
+        const result = await postService.getPostVotes(postId, userId);
 
         return res.status(200).json({
             success: true,
