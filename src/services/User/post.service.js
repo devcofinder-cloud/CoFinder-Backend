@@ -388,6 +388,56 @@ const getPostVotes = async (postId, userId) => {
     };
 };
 
+
+
+
+
+const getRecentlyPosted = async (page = 1, limit = 10) => {
+    try {
+        page = Number(page);
+        limit = Number(limit);
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const skip = (page - 1) * limit;
+
+        const posts = await Post.find({
+            isDeleted: false,
+            createdAt: {
+                $gte: sevenDaysAgo,
+            },
+        })
+            .populate("author", "fullName profileImage profileImageType")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const total = await Post.countDocuments({
+            isDeleted: false,
+            createdAt: {
+                $gte: sevenDaysAgo,
+            },
+        });
+
+        return {
+            posts,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page < Math.ceil(total / limit),
+            },
+        };
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -403,5 +453,6 @@ module.exports = {
   getSavedPosts,
   toggleUpvote,
   toggleDownvote,
-  getPostVotes
+  getPostVotes,
+  getRecentlyPosted
 };

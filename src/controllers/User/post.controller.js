@@ -287,6 +287,30 @@ const getVotes = async (req, res) => {
     }
 };
 
+
+
+const recentlyPosted = async (req, res) => {
+    try {
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 10;
+
+        const result = await postService.getMyPostsgetRecentlyPosted(page, limit);
+
+        return res.status(200).json({
+            success: true,
+            message: "Recently posted fetched successfully",
+            data: result,
+        });
+    } catch (error) {
+        console.error("Recently posted error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch recently posted",
+        });
+    }
+};
+
 module.exports = {
     createPost,
     getAllPosts,
@@ -302,5 +326,6 @@ module.exports = {
     getSavedPostsController,
     handleUpvote,
     handleDownvote,
-    getVotes
+    getVotes,
+    recentlyPosted
 };

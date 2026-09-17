@@ -29,6 +29,8 @@ router.get(
     postController.getAllPosts
 );
 
+router.get("/recently-posted", postController.recentlyPosted);
+
 router.get("/my-post",
     verifyToken,
     postController.getMyPosts
@@ -103,6 +105,8 @@ router.post("/:postId/upvote", verifyToken, postController.handleUpvote);
 router.post("/:postId/downvote", verifyToken, postController.handleDownvote);
 
 router.get("/:postId/votes", verifyToken, postController.getVotes);
+
+
 
 
 module.exports = router;
