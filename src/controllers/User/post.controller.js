@@ -294,7 +294,7 @@ const recentlyPosted = async (req, res) => {
         const page = req.query.page || 1;
         const limit = req.query.limit || 10;
 
-        const result = await postService.getMyPostsgetRecentlyPosted(page, limit);
+        const result = await postService.getRecentlyPosted(page, limit);
 
         return res.status(200).json({
             success: true,
@@ -302,11 +302,11 @@ const recentlyPosted = async (req, res) => {
             data: result,
         });
     } catch (error) {
-        console.error("Recently posted error:", error);
+        console.error("RECENTLY POSTED ERROR:", error);
 
         return res.status(500).json({
             success: false,
-            message: "Failed to fetch recently posted",
+            message: error.message || "Failed to fetch recently posted",
         });
     }
 };

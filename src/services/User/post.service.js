@@ -408,7 +408,7 @@ const getRecentlyPosted = async (page = 1, limit = 10) => {
                 $gte: sevenDaysAgo,
             },
         })
-            .populate("author", "fullName profileImage profileImageType")
+            .populate("author", "name profileImage profileImageType")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
