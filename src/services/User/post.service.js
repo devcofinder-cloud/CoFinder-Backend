@@ -452,6 +452,8 @@ module.exports = {
   toggleSavePost,
   getSavedPosts,
   toggleUpvote,
+
+  
   toggleDownvote,
   getPostVotes,
   getRecentlyPosted
