@@ -29,6 +29,7 @@ app.use("/api/dashboard",require('./src/routes/User/userDashboard.routes'));
 app.use("/api/professional",require('./src/routes/User/professionalProfile.routes'));
 app.use("/api/notification",require('./src/routes/User/notification.routes'));
 app.use("/api/profile-count",require('./src/routes/User/profileView.routes'));
+app.use("/api/waitlist", require('./src/routes/User/waitList.routes'));
 
 
 
@@ -37,7 +38,7 @@ app.use('/api/admin', require('./src/routes/admin/admin.auth.routes'))
 app.use('/api/admin/users', require('./src/routes/admin/user.routes'))
 app.use('/api/admin/question', require('./src/routes/admin/questionaire.routes'))
 app.use('/api/admin/profile-questions', require('./src/routes/admin/profileQuestions.routes'))
-
+app.use('/api/ai', require('./src/routes/User/ai.routes') );
 
 
 app.get('/',(req,res)=>{
