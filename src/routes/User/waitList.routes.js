@@ -7,6 +7,6 @@ const {
 const router = express.Router();
 
 router.post("/join", addToWaitlist);
-router.get("/", getWaitlist);
+router.get("/admin/get", getWaitlist);
 
 module.exports = router;
