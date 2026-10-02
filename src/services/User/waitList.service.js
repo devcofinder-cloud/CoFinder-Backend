@@ -20,6 +20,16 @@ const joinWaitlist = async (email) => {
   return waitlistUser;
 };
 
+
+
+const getWaitlist = async () => {
+  return await Waitlist.find({})
+    .sort({ createdAt: -1 })
+    .select("-__v");
+};
+
+
 module.exports = {
   joinWaitlist,
+  getWaitlist
 };

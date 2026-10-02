@@ -1,4 +1,28 @@
-const { joinWaitlist } = require("../../services/User/waitList.service");
+
+
+
+const waitlistService = require("../../services/User/waitList.service");
+
+const getWaitlist = async (req, res) => {
+  try {
+    const waitlist = await waitlistService.getWaitlist();
+
+    return res.status(200).json({
+      success: true,
+      count: waitlist.length,
+      data: waitlist,
+    });
+  } catch (error) {
+    console.error("Get waitlist error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch waitlist",
+    });
+  }
+};
+
+
 
 const addToWaitlist = async (req, res) => {
   try {
@@ -20,7 +44,7 @@ const addToWaitlist = async (req, res) => {
       });
     }
 
-    await joinWaitlist(email);
+    await waitListService.joinWaitlist(email);
 
     return res.status(201).json({
       success: true,
@@ -38,4 +62,5 @@ const addToWaitlist = async (req, res) => {
 
 module.exports = {
   addToWaitlist,
+  getWaitlist
 };
