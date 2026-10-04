@@ -44,7 +44,7 @@ const addToWaitlist = async (req, res) => {
       });
     }
 
-    await waitListService.joinWaitlist(email);
+    await waitlistService.joinWaitlist(email);
 
     return res.status(201).json({
       success: true,
