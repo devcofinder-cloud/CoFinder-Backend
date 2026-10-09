@@ -34,11 +34,14 @@ app.use("/api/profile-count",require('./src/routes/User/profileView.routes'));
 
 //admin
 app.use('/api/admin', require('./src/routes/admin/admin.auth.routes'))
+app.use('/api/admin/dashboard', require('./src/routes/admin/dashboard.routes'))
 app.use('/api/admin/users', require('./src/routes/admin/user.routes'))
+app.use('/api/admin/posts', require('./src/routes/admin/post.routes'))
 app.use('/api/admin/question', require('./src/routes/admin/questionaire.routes'))
 app.use('/api/admin/profile-questions', require('./src/routes/admin/profileQuestions.routes'))
 app.use('/api/ai', require('./src/routes/User/ai.routes') );
 app.use("/api/admin/waitlist", require('./src/routes/User/waitList.routes'));
+
 
 
 app.get('/',(req,res)=>{
