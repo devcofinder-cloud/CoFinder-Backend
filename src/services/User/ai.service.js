@@ -80,10 +80,16 @@ const generateAIResponse = async (message, history = []) => {
       model: MODEL,
       messages,
       stream: false,
+      think: false,
+      keep_alive: "10m",
+      options: {
+        temperature: 0,
+        num_predict: 180,
+      },
     },
     {
       timeout: 120000,
-    }
+    },
   );
 
   return response.data.message.content;
