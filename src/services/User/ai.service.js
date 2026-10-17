@@ -1,97 +1,139 @@
-const axios = require("axios");
 
-const OLLAMA_URL = "http://localhost:11434/api/chat";
-const MODEL = "qwen3:1.7b";
+const axios = require("axios");
+const User = require("../../models/user.model");
+
+const QWEN_API_URL = `${
+  process.env.QWEN_BASE_URL ||
+  "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1"
+}/chat/completions`;
+
+const MODEL = process.env.QWEN_MODEL || "qwen3.7-plus";
 
 const COFINDER_SYSTEM_PROMPT = `
 You are the official AI assistant for Co-Finder.
 
-ABOUT CO-FINDER:
-Co-Finder is a platform where people can discover potential co-founders,
-connect with other founders, create professional profiles, discover people,
-send connection requests, chat with connections, create and interact with
-posts, and collaborate on projects.
+You help users discover founders and use Co-Finder features.
 
-STRICT RULES:
+You can answer questions about:
+- Co-Founder discovery and recommendations
+- User profiles and archetypes
+- Connections and messaging
+- Posts, projects and notifications
+- Registration, login and account settings
 
-1. You ONLY help users with Co-Finder and things directly related to using Co-Finder.
+When actual matching user profiles are provided, recommend only those users.
+Never invent user names, archetypes or profile information.
+If no matching profiles are provided, clearly say no matching profiles were found.
+Do not expose private information such as email, password or internal IDs.
 
-2. You can answer questions about:
-- Co-Finder features
-- Registration and login
-- User profiles
-- Profile completion
-- Profile assessments
-- Founder discovery
-- Recommended founders
-- Same archetype founders
-- Nearby founders
-- Connections
-- Messaging and chat
-- Posts
-- Projects
-- Notifications
-- Account settings
-- General co-founder discovery and collaboration questions when directly related to Co-Finder
-
-3. If the user asks something unrelated to Co-Finder, DO NOT answer that question.
-
-4. For unrelated questions, respond exactly:
+For unrelated questions, respond exactly:
 "I can only help you with Co-Finder and its features."
 
-5. Do not answer questions about:
-- General programming
-- Mathematics
-- Science
-- Politics
-- News
-- Entertainment
-- Sports
-- Medical advice
-- General education
-- Other unrelated topics
-
-6. Never invent a Co-Finder feature.
-
-7. If you don't know whether Co-Finder supports something, say:
-"I don't have information about that Co-Finder feature yet."
-
-8. Keep answers helpful, concise and easy to understand.
-
-9. You are a Co-Finder support assistant, not a general-purpose AI assistant.
+Keep responses concise, helpful and easy to understand.
 `;
 
-const generateAIResponse = async (message, history = []) => {
+const generateAIResponse = async (message, history = [], currentUserId) => {
+  if (!process.env.QWEN_API_KEY) {
+    throw new Error("QWEN_API_KEY is missing");
+  }
+
+  const archetypeMatch = message.match(
+    /\b(?:archetype|archetypes|type)\s*(?:is|:|=)?\s*["']?([a-z0-9 _-]{2,50})["']?/i
+  );
+
+  const asksForPeople =
+    /\b(suggest|recommend|find|show|search|discover|people|founders|users|matching|same archetype|similar archetype)\b/i.test(
+      message
+    );
+
+  let matchingUsers = [];
+
+  if (asksForPeople && archetypeMatch) {
+    const requestedArchetype = archetypeMatch[1]
+      .trim()
+      .replace(/[?.!,]+$/, "");
+
+    matchingUsers = await User.find({
+      archetype: {
+        $regex: `^${requestedArchetype.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      },
+      _id: { $ne: currentUserId },
+      role: "user",
+    })
+      .select("name username displayName archetype profileImage profileImageType")
+      .limit(10)
+      .lean();
+  }
+
+  const databaseContext =
+    matchingUsers.length > 0
+      ? `Actual matching Co-Finder users from MongoDB:\n${JSON.stringify(
+          matchingUsers.map((user) => ({
+            name: user.displayName || user.name,
+            username: user.username || null,
+            archetype: user.archetype,
+            profileImage: user.profileImage || null,
+            profileImageType: user.profileImageType || null,
+          }))
+        )}\nRecommend only these users.`
+      : asksForPeople && archetypeMatch
+        ? `No matching users were found for archetype "${archetypeMatch[1].trim()}". Do not invent profiles.`
+        : "";
+
   const messages = [
     {
       role: "system",
       content: COFINDER_SYSTEM_PROMPT,
     },
-    ...history,
+    ...history.filter(
+      (item) =>
+        item &&
+        ["user", "assistant"].includes(item.role) &&
+        typeof item.content === "string"
+    ),
     {
       role: "user",
-      content: message,
+      content: databaseContext
+        ? `${message}\n\n${databaseContext}`
+        : message,
     },
   ];
 
-const response = await axios.post(
-  OLLAMA_URL,
-  {
-    model: MODEL,
-    messages,
-    stream: false,
-    think: false,
-    keep_alive: "10m",
-    options: {
-      temperature: 0,
-      num_predict: 180,
-    },
-  },
-  {
-    timeout: 120000,
+  try {
+    const response = await axios.post(
+      QWEN_API_URL,
+      {
+        model: MODEL,
+        messages,
+        stream: false,
+        temperature: 0,
+        max_tokens: 300,
+        enable_thinking: false,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.QWEN_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 60000,
+      }
+    );
+
+    const content = response.data?.choices?.[0]?.message?.content;
+
+    if (!content) {
+      throw new Error("Qwen API returned an empty response");
+    }
+
+    return content.trim();
+  } catch (error) {
+    console.error(
+      "Qwen API Error:",
+      error.response?.data || error.message
+    );
+    throw new Error("Failed to generate AI response");
   }
-);
-  return response.data.message.content;
 };
 
 module.exports = {

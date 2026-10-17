@@ -11,10 +11,11 @@ const chatWithAI = async (req, res) => {
       });
     }
 
-    const reply = await generateAIResponse(
-      message.trim(),
-      Array.isArray(history) ? history : []
-    );
+   const reply = await generateAIResponse(
+  message.trim(),
+  Array.isArray(history) ? history : [],
+  req.user?._id || req.user?.id
+);
 
     return res.status(200).json({
       success: true,
