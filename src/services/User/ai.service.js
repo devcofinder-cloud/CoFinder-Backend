@@ -38,22 +38,30 @@ PEOPLE RECOMMENDATION RULES:
 7. Do not return irrelevant users just to fill the list.
 8. Never expose email, password or private information.
 
-RESPONSE FORMAT:
+STRICT RESPONSE FORMAT FOR PEOPLE RECOMMENDATIONS:
 
-For every recommended person include:
+When DATABASE RESULTS are provided:
 
-- Name
-- Archetype
-- User ID
-- Profile picture URL
-- About / Background
-- Profile link: [View Profile](/user-profile/USER_ID)
+1. Give ONLY a short, natural conversational introduction.
+2. Keep the response to 1-2 sentences maximum.
+3. Do NOT list individual users.
+4. Do NOT output names, usernames, IDs, archetypes, profile picture URLs, profile links or background details.
+5. Do NOT reproduce or summarize DATABASE RESULTS.
+6. Do NOT create Markdown headings or bullet lists for recommended users.
+7. The frontend independently displays user cards using the users array.
+8. Never duplicate information that the frontend will display in cards.
 
-Group users by archetype whenever multiple archetypes are involved.
+Example:
+"Here are a few founders who could be a good match for your requirements. Take a look at their profiles and see who aligns with your goals."
+
+If no matching users are provided:
+Politely tell the user that no matching profiles were found.
 
 GENERAL QUESTIONS:
 
 For general startup, business, technology and Co-Finder questions, provide concise and actionable answers.
+
+Use Markdown when helpful for normal conversational answers.
 
 Always be helpful, natural and founder-focused.
 `;
@@ -73,30 +81,12 @@ const getUserData = (user) => ({
   profileLink: `/user-profile/${user._id}`,
 });
 
-const buildFallbackResponse = (users, message) => {
+const buildFallbackResponse = (users) => {
   if (!users.length) {
     return "I couldn't find matching profiles in the Co-Finder community right now. Try exploring other backgrounds or skills.";
   }
 
-  const intro = `I found ${users.length} potentially relevant people from the Co-Finder community based on your request: **${message}**`;
-
-  const list = users.map((user) => {
-    const name = user.displayName || user.name || "Founder";
-    const archetype = user.archetype || "Founder";
-    const username = user.username ? ` (@${user.username})` : "";
-    const about = user.about
-      ? `\n  Background: ${user.about.substring(0, 180)}`
-      : "";
-
-    return `### ${name}${username}
-- **Archetype:** ${archetype}
-- **ID:** ${user._id}
-- **Profile Picture:** ${user.profileImage || "Not available"}
-- **Background:** ${about || "Not provided"}
-- [View Profile](/user-profile/${user._id})`;
-  }).join("\n\n");
-
-  return `${intro}\n\n${list}\n\nExplore these profiles and connect with founders who match your goals!`;
+  return "Here are a few founders from the Co-Finder community who could be a good match for your requirements. Explore their profiles and connect with the ones who align with your goals.";
 };
 
 const generateAIResponse = async (
@@ -123,20 +113,20 @@ const generateAIResponse = async (
         message
       );
 
-    // Fetch all available archetypes
     const availableArchetypes = await User.distinct("archetype", {
       role: "user",
       archetype: { $type: "string", $ne: "" },
     });
 
-    // Identify matching archetypes dynamically
     let matchedArchetypes = availableArchetypes.filter((archetype) => {
       if (!archetype) return false;
 
       const clean = archetype.trim().toLowerCase();
 
-      return clean.length > 0 &&
-        normalizedMessage.includes(clean);
+      return (
+        clean.length > 0 &&
+        normalizedMessage.includes(clean)
+      );
     });
 
     if (asksForSameArchetype && currentUser?.archetype) {
@@ -145,7 +135,6 @@ const generateAIResponse = async (
 
     matchedArchetypes = [...new Set(matchedArchetypes)];
 
-    // Determine if the user is requesting people
     const discoveryIntent =
       asksForPeople ||
       asksForSameArchetype ||
@@ -163,7 +152,6 @@ const generateAIResponse = async (
           : {}),
       };
 
-      // Fetch profiles with relevant information
       const users = await User.find(baseQuery)
         .select(
           "_id name username displayName archetype about location role profileImage profileImageType"
@@ -171,7 +159,6 @@ const generateAIResponse = async (
         .limit(300)
         .lean();
 
-      // Score profiles against the complete user prompt
       const promptWords = normalizedMessage
         .split(/[^a-z0-9+#]+/)
         .filter((word) => word.length > 2);
@@ -193,7 +180,6 @@ const generateAIResponse = async (
 
         let score = 0;
 
-        // Exact archetype match
         if (
           matchedArchetypes.some(
             (a) => a.toLowerCase() === archetype
@@ -202,17 +188,16 @@ const generateAIResponse = async (
           score += 12;
         }
 
-        // Archetype partial matching
         if (
           matchedArchetypes.some(
-            (a) => archetype.includes(a.toLowerCase()) ||
+            (a) =>
+              archetype.includes(a.toLowerCase()) ||
               a.toLowerCase().includes(archetype)
           )
         ) {
           score += 6;
         }
 
-        // Match individual prompt terms
         for (const word of promptWords) {
           const regex = new RegExp(
             `\\b${escapeRegex(word)}\\b`,
@@ -226,7 +211,6 @@ const generateAIResponse = async (
           if (regex.test(location)) score += 1;
         }
 
-        // Avoid recommending empty profiles over informative ones
         if (about.length > 30) score += 1;
 
         return {
@@ -241,15 +225,13 @@ const generateAIResponse = async (
         .slice(0, 15)
         .map((item) => item.user);
 
-      // Broader discovery if no textual match exists
       if (matchingUsers.length === 0) {
         matchingUsers = users
           .filter((user) => user.archetype || user.about)
           .slice(0, 10);
       }
 
-      // If there are very few matches, include additional profiles
-      if (matchingUsers.length < 3) {
+      if (matchingUsers.length < 3 && matchingUsers.length > 0) {
         const existingIds = new Set(
           matchingUsers.map((u) => u._id.toString())
         );
@@ -274,23 +256,26 @@ DATABASE RESULTS — VERIFIED CO-FINDER USERS:
 
 ${JSON.stringify(responseUsers, null, 2)}
 
-MANDATORY:
-- Only recommend these users.
-- Include their actual name, archetype, ID and profile picture URL.
-- Include background when available.
-- Include their actual profile link.
-- Never modify or fabricate user details.
-- Rank recommendations according to relevance.
+IMPORTANT:
+These are verified profiles retrieved from the database.
+
+Use them ONLY to understand and determine relevant recommendations.
+
+NEVER reproduce these records in your response.
+NEVER output names, usernames, IDs, archetypes, profile image URLs, profile links or background details.
+NEVER create bullet lists or headings for these users.
+
+Return only a short conversational introduction of 1-2 sentences.
+The frontend will independently render the actual user cards from the users array.
 `
       : discoveryIntent
-        ? "No matching user profiles were found in the database. Do not invent profiles."
+        ? "No matching user profiles were found in the database. Do not invent or recommend any profiles."
         : "";
 
-    // API key missing: use database fallback
     if (!process.env.QWEN_API_KEY) {
       return {
         reply: discoveryIntent
-          ? buildFallbackResponse(matchingUsers, message)
+          ? buildFallbackResponse(matchingUsers)
           : "Nova AI requires an AI provider API key to answer general questions.",
         users: responseUsers,
         archetype: matchedArchetypes[0] || null,
@@ -304,7 +289,14 @@ MANDATORY:
           ["user", "assistant"].includes(item.role) &&
           typeof item.content === "string"
       )
-      .slice(-8);
+      .slice(-8)
+      .map((item) => ({
+        role: item.role,
+        content:
+          item.role === "assistant" && item.users?.length
+            ? "I suggested some matching Co-Finder profiles."
+            : item.content,
+      }));
 
     const messages = [
       {
@@ -326,7 +318,7 @@ MANDATORY:
           messages,
           stream: false,
           temperature: 0.3,
-          max_tokens: 1200,
+          max_tokens: 500,
           enable_thinking: false,
         },
         {
@@ -346,7 +338,9 @@ MANDATORY:
       }
 
       return {
-        reply: content.trim(),
+        reply: discoveryIntent && responseUsers.length
+          ? content.trim()
+          : content.trim(),
         users: responseUsers,
         archetype: matchedArchetypes[0] || null,
       };
@@ -358,7 +352,7 @@ MANDATORY:
 
       return {
         reply: discoveryIntent
-          ? buildFallbackResponse(matchingUsers, message)
+          ? buildFallbackResponse(matchingUsers)
           : "I'm temporarily unable to connect to my AI service. Please try again.",
         users: responseUsers,
         archetype: matchedArchetypes[0] || null,
