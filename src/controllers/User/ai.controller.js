@@ -2,7 +2,7 @@ const { generateAIResponse } = require("../../services/User/ai.service");
 
 const chatWithAI = async (req, res) => {
   try {
-    const { message, history = [] } = req.body;
+    const { message, history = [], userId } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -11,19 +11,30 @@ const chatWithAI = async (req, res) => {
       });
     }
 
-   const reply = await generateAIResponse(
-  message.trim(),
-  Array.isArray(history) ? history : [],
-  req.user?._id || req.user?.id
-);
+    const currentUserId = req.user?._id || req.user?.id || userId;
+
+    const result = await generateAIResponse(
+      message.trim(),
+      Array.isArray(history) ? history : [],
+      currentUserId
+    );
+
+    const reply = typeof result === "string" ? result : result.reply;
+    const users =
+      typeof result === "object" && Array.isArray(result.users)
+        ? result.users
+        : [];
+    const archetype = typeof result === "object" ? result.archetype : null;
 
     return res.status(200).json({
       success: true,
       reply,
+      users,
+      archetype,
     });
   } catch (error) {
     console.error(
-      "Ollama Error:",
+      "AI Controller Error:",
       error.response?.data || error.message
     );
 

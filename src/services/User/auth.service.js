@@ -167,6 +167,7 @@ const updateUserProfile = async ({ userId, data }) => {
     "age",
     "gender",
     "archetype",
+    "about",
     "profileImage",
   ];
 

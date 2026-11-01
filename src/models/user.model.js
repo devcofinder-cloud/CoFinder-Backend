@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Male", "Female", "Prefer not to say", "Non-Binary"],
     },
+    about: {
+      type: String,
+      default: "",
+      maxlength: [1000, "About section cannot exceed 1000 characters"],
+      trim: true,
+    },
     archetype: {
       type: String,
     },

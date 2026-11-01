@@ -10,159 +10,291 @@ const QWEN_API_URL = `${
 const MODEL = process.env.QWEN_MODEL || "qwen3.7-plus";
 
 const COFINDER_SYSTEM_PROMPT = `
-You are Nova, the official AI assistant for Co-Finder.
+You are Nova, the official AI founder copilot and matching assistant for Co-Finder.
 
-Help users with Co-Finder features, co-founder discovery, user archetypes,
-connections, messaging, projects, and account features.
+YOUR RESPONSIBILITIES:
 
-When recommending people:
-- Recommend only users provided from the database.
-- Never invent names, usernames, archetypes, or profile details.
-- If no profiles are provided, clearly say no matching profiles were found.
-- Never reveal email addresses, passwords, tokens, or internal IDs.
-- Present recommendations as a readable bullet list.
-- For each person, show their name and archetype when available.
+1. Help founders discover co-founders, collaborators and team members.
+2. Understand natural language requests without restricting users to predefined keywords.
+3. Interpret requirements based on:
+   - Archetype
+   - Skills
+   - Professional background
+   - Experience
+   - Interests
+   - Industry
+   - Goals
+   - Location
+   - About/profile description
 
-For unrelated questions, respond exactly:
-"I can only help you with Co-Finder and its features."
+PEOPLE RECOMMENDATION RULES:
 
-Keep responses concise and helpful.
+1. Recommend ONLY real users provided in DATABASE RESULTS.
+2. Never invent names, IDs, usernames, archetypes or profile details.
+3. Match users based on the complete meaning of the user's request.
+4. A user can be relevant even if their archetype does not exactly match the requested profession.
+5. Consider multiple archetypes and backgrounds.
+6. If exact matches are unavailable, recommend the closest relevant profiles.
+7. Do not return irrelevant users just to fill the list.
+8. Never expose email, password or private information.
+
+RESPONSE FORMAT:
+
+For every recommended person include:
+
+- Name
+- Archetype
+- User ID
+- Profile picture URL
+- About / Background
+- Profile link: [View Profile](/user-profile/USER_ID)
+
+Group users by archetype whenever multiple archetypes are involved.
+
+GENERAL QUESTIONS:
+
+For general startup, business, technology and Co-Finder questions, provide concise and actionable answers.
+
+Always be helpful, natural and founder-focused.
 `;
 
 const escapeRegex = (value) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getUserData = (user) => ({
+  _id: user._id.toString(),
+  name: user.displayName || user.name || "Founder",
+  username: user.username || "",
+  archetype: user.archetype || "Founder",
+  about: user.about || "",
+  location: user.location || "",
+  profileImage: user.profileImage || "",
+  profileImageType: user.profileImageType || "avatar",
+  profileLink: `/user-profile/${user._id}`,
+});
+
+const buildFallbackResponse = (users, message) => {
+  if (!users.length) {
+    return "I couldn't find matching profiles in the Co-Finder community right now. Try exploring other backgrounds or skills.";
+  }
+
+  const intro = `I found ${users.length} potentially relevant people from the Co-Finder community based on your request: **${message}**`;
+
+  const list = users.map((user) => {
+    const name = user.displayName || user.name || "Founder";
+    const archetype = user.archetype || "Founder";
+    const username = user.username ? ` (@${user.username})` : "";
+    const about = user.about
+      ? `\n  Background: ${user.about.substring(0, 180)}`
+      : "";
+
+    return `### ${name}${username}
+- **Archetype:** ${archetype}
+- **ID:** ${user._id}
+- **Profile Picture:** ${user.profileImage || "Not available"}
+- **Background:** ${about || "Not provided"}
+- [View Profile](/user-profile/${user._id})`;
+  }).join("\n\n");
+
+  return `${intro}\n\n${list}\n\nExplore these profiles and connect with founders who match your goals!`;
+};
 
 const generateAIResponse = async (
   message,
   history = [],
   currentUserId
 ) => {
-  if (!process.env.QWEN_API_KEY) {
-    throw new Error("QWEN_API_KEY is missing");
-  }
-
   try {
     const currentUser = currentUserId
       ? await User.findById(currentUserId)
-          .select("archetype")
+          .select("archetype name displayName")
           .lean()
       : null;
 
+    const normalizedMessage = message.toLowerCase().trim();
+
     const asksForPeople =
-      /\b(suggest|recommend|find|show|search|discover|people|founders|users|profiles|matching|matches|same archetype|similar archetype)\b/i.test(
+      /\b(find|suggest|recommend|show|search|discover|people|person|founders?|cofounders?|co-founders?|users?|profiles?|matching|matches|talent|members?|partners?|team|candidates?|who is|who are|anyone|list|connect)\b/i.test(
         message
       );
 
     const asksForSameArchetype =
-      /\b(my archetype|same archetype|similar archetype|people like me|users like me|my type)\b/i.test(
+      /\b(my archetype|same archetype|similar archetype|people like me|users like me|my type|matching my archetype)\b/i.test(
         message
       );
 
+    // Fetch all available archetypes
     const availableArchetypes = await User.distinct("archetype", {
       role: "user",
       archetype: { $type: "string", $ne: "" },
     });
 
-    const normalizedMessage = message.toLowerCase();
+    // Identify matching archetypes dynamically
+    let matchedArchetypes = availableArchetypes.filter((archetype) => {
+      if (!archetype) return false;
 
-    let requestedArchetype = availableArchetypes.find((archetype) => {
-      const value = String(archetype || "").trim();
+      const clean = archetype.trim().toLowerCase();
 
-      return (
-        value.length > 0 &&
-        normalizedMessage.includes(value.toLowerCase())
-      );
+      return clean.length > 0 &&
+        normalizedMessage.includes(clean);
     });
 
-    if (!requestedArchetype && asksForSameArchetype) {
-      requestedArchetype = currentUser?.archetype;
+    if (asksForSameArchetype && currentUser?.archetype) {
+      matchedArchetypes.unshift(currentUser.archetype);
     }
 
-    if (!requestedArchetype && asksForPeople) {
-      const previousUserMessages = history
-        .filter(
-          (item) =>
-            item?.role === "user" &&
-            typeof item.content === "string"
-        )
-        .slice(-5)
-        .map((item) => item.content.toLowerCase());
+    matchedArchetypes = [...new Set(matchedArchetypes)];
 
-      requestedArchetype = availableArchetypes.find((archetype) => {
-        const value = String(archetype || "").trim().toLowerCase();
-
-        return (
-          value.length > 0 &&
-          previousUserMessages.some((previousMessage) =>
-            previousMessage.includes(value)
-          )
-        );
-      });
-
-      if (!requestedArchetype) {
-        requestedArchetype = currentUser?.archetype;
-      }
-    }
+    // Determine if the user is requesting people
+    const discoveryIntent =
+      asksForPeople ||
+      asksForSameArchetype ||
+      /\b(background|archetype|skills|experience|industry|profession|field|domain|designer|developer|marketing|finance|business|technology|startup)\b/i.test(
+        message
+      );
 
     let matchingUsers = [];
 
-    if (asksForPeople && requestedArchetype) {
-      const userQuery = {
+    if (discoveryIntent) {
+      const baseQuery = {
         role: "user",
-        archetype: {
-          $regex: `^${escapeRegex(
-            String(requestedArchetype).trim()
-          )}$`,
-          $options: "i",
-        },
+        ...(currentUserId
+          ? { _id: { $ne: currentUserId } }
+          : {}),
       };
 
-      if (currentUserId) {
-        userQuery._id = { $ne: currentUserId };
-      }
-
-      matchingUsers = await User.find(userQuery)
-        .select("name username displayName archetype profileImage profileImageType")
-        .limit(10)
+      // Fetch profiles with relevant information
+      const users = await User.find(baseQuery)
+        .select(
+          "_id name username displayName archetype about location role profileImage profileImageType"
+        )
+        .limit(300)
         .lean();
 
-      console.log("Nova requested archetype:", requestedArchetype);
-      console.log("Nova matching profiles:", matchingUsers.length);
+      // Score profiles against the complete user prompt
+      const promptWords = normalizedMessage
+        .split(/[^a-z0-9+#]+/)
+        .filter((word) => word.length > 2);
+
+      const scoredUsers = users.map((user) => {
+        const archetype = (user.archetype || "").toLowerCase();
+        const about = (user.about || "").toLowerCase();
+        const name = (user.displayName || user.name || "").toLowerCase();
+        const username = (user.username || "").toLowerCase();
+        const location = (user.location || "").toLowerCase();
+
+        const combinedText = [
+          archetype,
+          about,
+          name,
+          username,
+          location,
+        ].join(" ");
+
+        let score = 0;
+
+        // Exact archetype match
+        if (
+          matchedArchetypes.some(
+            (a) => a.toLowerCase() === archetype
+          )
+        ) {
+          score += 12;
+        }
+
+        // Archetype partial matching
+        if (
+          matchedArchetypes.some(
+            (a) => archetype.includes(a.toLowerCase()) ||
+              a.toLowerCase().includes(archetype)
+          )
+        ) {
+          score += 6;
+        }
+
+        // Match individual prompt terms
+        for (const word of promptWords) {
+          const regex = new RegExp(
+            `\\b${escapeRegex(word)}\\b`,
+            "i"
+          );
+
+          if (regex.test(archetype)) score += 5;
+          if (regex.test(about)) score += 3;
+          if (regex.test(name)) score += 2;
+          if (regex.test(username)) score += 1;
+          if (regex.test(location)) score += 1;
+        }
+
+        // Avoid recommending empty profiles over informative ones
+        if (about.length > 30) score += 1;
+
+        return {
+          user,
+          score,
+        };
+      });
+
+      matchingUsers = scoredUsers
+        .filter((item) => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 15)
+        .map((item) => item.user);
+
+      // Broader discovery if no textual match exists
+      if (matchingUsers.length === 0) {
+        matchingUsers = users
+          .filter((user) => user.archetype || user.about)
+          .slice(0, 10);
+      }
+
+      // If there are very few matches, include additional profiles
+      if (matchingUsers.length < 3) {
+        const existingIds = new Set(
+          matchingUsers.map((u) => u._id.toString())
+        );
+
+        const additionalUsers = users
+          .filter(
+            (u) =>
+              !existingIds.has(u._id.toString()) &&
+              (u.archetype || u.about)
+          )
+          .slice(0, 3 - matchingUsers.length);
+
+        matchingUsers.push(...additionalUsers);
+      }
     }
 
-    let databaseContext = "";
+    const responseUsers = matchingUsers.map(getUserData);
 
-    if (asksForPeople) {
-      if (matchingUsers.length > 0) {
-        databaseContext = `
-DATABASE RESULTS — REAL CO-FINDER USERS
+    const databaseContext = responseUsers.length
+      ? `
+DATABASE RESULTS — VERIFIED CO-FINDER USERS:
 
-Requested archetype: ${requestedArchetype}
+${JSON.stringify(responseUsers, null, 2)}
 
-${JSON.stringify(
-  matchingUsers.map((user) => ({
-    name: user.displayName || user.name,
-    username: user.username || null,
-    archetype: user.archetype,
-    profileImage: user.profileImage || null,
-    profileImageType: user.profileImageType || null,
-  }))
-)}
+MANDATORY:
+- Only recommend these users.
+- Include their actual name, archetype, ID and profile picture URL.
+- Include background when available.
+- Include their actual profile link.
+- Never modify or fabricate user details.
+- Rank recommendations according to relevance.
+`
+      : discoveryIntent
+        ? "No matching user profiles were found in the database. Do not invent profiles."
+        : "";
 
-Recommend only these database results.
-`;
-      } else if (requestedArchetype) {
-        databaseContext = `
-No Co-Finder users were found for the archetype "${requestedArchetype}".
-Do not invent users. Explain that no matching profiles were found.
-`;
-      } else {
-        databaseContext = `
-No archetype could be identified from the request.
-Ask the user to mention an archetype available on Co-Finder.
-Do not invent users.
-`;
-      }
+    // API key missing: use database fallback
+    if (!process.env.QWEN_API_KEY) {
+      return {
+        reply: discoveryIntent
+          ? buildFallbackResponse(matchingUsers, message)
+          : "Nova AI requires an AI provider API key to answer general questions.",
+        users: responseUsers,
+        archetype: matchedArchetypes[0] || null,
+      };
     }
 
     const safeHistory = history
@@ -172,7 +304,7 @@ Do not invent users.
           ["user", "assistant"].includes(item.role) &&
           typeof item.content === "string"
       )
-      .slice(-10);
+      .slice(-8);
 
     const messages = [
       {
@@ -182,45 +314,59 @@ Do not invent users.
       ...safeHistory,
       {
         role: "user",
-        content: databaseContext
-          ? `${message}\n\n${databaseContext}`
-          : message,
+        content: `${message}\n\n${databaseContext}`,
       },
     ];
 
-    const response = await axios.post(
-      QWEN_API_URL,
-      {
-        model: MODEL,
-        messages,
-        stream: false,
-        temperature: 0,
-        max_tokens: 500,
-        enable_thinking: false,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.QWEN_API_KEY}`,
-          "Content-Type": "application/json",
+    try {
+      const response = await axios.post(
+        QWEN_API_URL,
+        {
+          model: MODEL,
+          messages,
+          stream: false,
+          temperature: 0.3,
+          max_tokens: 1200,
+          enable_thinking: false,
         },
-        timeout: 60000,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.QWEN_API_KEY.trim()}`,
+            "Content-Type": "application/json",
+          },
+          timeout: 25000,
+        }
+      );
+
+      const content =
+        response.data?.choices?.[0]?.message?.content;
+
+      if (!content || typeof content !== "string") {
+        throw new Error("Empty response from AI provider");
       }
-    );
 
-    const content = response.data?.choices?.[0]?.message?.content;
+      return {
+        reply: content.trim(),
+        users: responseUsers,
+        archetype: matchedArchetypes[0] || null,
+      };
+    } catch (llmError) {
+      console.warn(
+        "External LLM error, using fallback:",
+        llmError.message
+      );
 
-    if (!content || typeof content !== "string") {
-      throw new Error("Qwen API returned an empty response");
+      return {
+        reply: discoveryIntent
+          ? buildFallbackResponse(matchingUsers, message)
+          : "I'm temporarily unable to connect to my AI service. Please try again.",
+        users: responseUsers,
+        archetype: matchedArchetypes[0] || null,
+      };
     }
-
-    return content.trim();
   } catch (error) {
-    console.error(
-      "Nova AI Error:",
-      error.response?.data || error.message
-    );
-
-    throw new Error("Failed to generate AI response");
+    console.error("generateAIResponse error:", error.message);
+    throw error;
   }
 };
 

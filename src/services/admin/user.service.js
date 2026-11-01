@@ -141,6 +141,7 @@ const updateUserService = async (userId, updateData) => {
     "age",
     "gender",
     "archetype",
+    "about",
     "completionStatus",
     "role",
     "profileImage",
